@@ -1,901 +1,191 @@
--- Reanimate GUI Script
--- Created with smooth animations and modern design
-
+local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
-local SoundService = game:GetService("SoundService")
-local HttpService = game:GetService("HttpService")
-
+local TeleportService = game:GetService("TeleportService")
 local player = Players.LocalPlayer
-local mouse = player:GetMouse()
-
--- Function to play toggle sound
-local function playToggleSound()
-	local sound = Instance.new("Sound")
-	sound.SoundId = "rbxassetid://177266782"
-	sound.Volume = 0.5
-	sound.Parent = workspace
-	sound:Play()
-	game:GetService("Debris"):AddItem(sound, sound.TimeLength)
-end
-
--- Function to copy to clipboard without notification
-local function copyToClipboard(text)
-	playToggleSound()
-	
-	pcall(function()
-		setclipboard(text)
-		print("Copied to clipboard:", text)
-	end)
-end
-
--- Main GUI Container
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "ReanimateGUI"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
--- Mobile detection and scaling
-local isMobile = UserInputService.TouchEnabled and not UserInputService.MouseEnabled
-if isMobile then
-	ScreenGui.DisplayOrder = 10
-end
-
--- Main UI Frame (initially hidden)
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Size = isMobile and UDim2.new(0.85, 0, 0.7, 0) or UDim2.new(0, 500, 0, 500)
-MainFrame.Position = isMobile and UDim2.new(0.5, 0, 0.5, 0) or UDim2.new(0.5, -250, 0.5, -250)
-MainFrame.AnchorPoint = isMobile and Vector2.new(0.5, 0.5) or Vector2.new(0, 0)
-MainFrame.BackgroundColor3 = Color3.new(0, 0, 0)
-MainFrame.BackgroundTransparency = 0.3
-MainFrame.BorderSizePixel = 0
-MainFrame.ClipsDescendants = true
-
--- Smooth rounded corners
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 12)
-UICorner.Parent = MainFrame
-
--- Thin transparent white outline
-local UIStroke = Instance.new("UIStroke")
-UIStroke.Color = Color3.new(1, 1, 1)
-UIStroke.Transparency = 0.7
-UIStroke.Thickness = 1
-UIStroke.Parent = MainFrame
-
--- Smooth drag functionality
-local dragging = false
-local dragInput, dragStart, startPos
-
--- Function for smooth dragging with easing
-local function update(input)
-	local delta = input.Position - dragStart
-	local newX = startPos.X.Offset + delta.X
-	local newY = startPos.Y.Offset + delta.Y
-	
-	-- Apply easing for smooth movement
-	local tween = TweenService:Create(MainFrame, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-		Position = UDim2.new(startPos.X.Scale, newX, startPos.Y.Scale, newY)
-	})
-	tween:Play()
-end
-
-MainFrame.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		dragging = true
-		dragStart = input.Position
-		startPos = MainFrame.Position
-		
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then
-				dragging = false
-			end
-		end)
-	end
-end)
-
-MainFrame.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-		dragInput = input
-	end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-	if dragging and (input == dragInput) then
-		update(input)
-	end
-end)
-
--- Title section
-local TitleFrame = Instance.new("Frame")
-TitleFrame.Name = "TitleFrame"
-TitleFrame.Size = UDim2.new(1, 0, 0, 80)
-TitleFrame.Position = UDim2.new(0, 0, 0, 0)
-TitleFrame.BackgroundTransparency = 1
-TitleFrame.Parent = MainFrame
-
--- Main title moved to left
-local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Name = "TitleLabel"
-TitleLabel.Size = UDim2.new(1, -20, 0, 30)
-TitleLabel.Position = UDim2.new(0, 20, 0, 10)
-TitleLabel.Text = "Reanimate Scripts"
-TitleLabel.Font = Enum.Font.GothamBold
-TitleLabel.TextSize = 22
-TitleLabel.TextColor3 = Color3.new(1, 1, 1)
-TitleLabel.BackgroundTransparency = 1
-TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-TitleLabel.Parent = TitleFrame
-
--- Subtitle text
-local SubtitleLabel = Instance.new("TextLabel")
-SubtitleLabel.Name = "SubtitleLabel"
-SubtitleLabel.Size = UDim2.new(1, -20, 0, 20)
-SubtitleLabel.Position = UDim2.new(0, 20, 0, 40)
-SubtitleLabel.Text = "Made By Onyx Or Known As Syike"
-SubtitleLabel.Font = Enum.Font.Gotham
-SubtitleLabel.TextSize = 12
-SubtitleLabel.TextColor3 = Color3.new(1, 1, 1)
-SubtitleLabel.TextTransparency = 0.6
-SubtitleLabel.BackgroundTransparency = 1
-SubtitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-SubtitleLabel.Parent = TitleFrame
-
--- Decorative line under title
-local Line = Instance.new("Frame")
-Line.Name = "TitleLine"
-Line.Size = UDim2.new(1, -40, 0, 1)
-Line.Position = UDim2.new(0, 20, 0, 70)
-Line.BackgroundColor3 = Color3.new(1, 1, 1)
-Line.BackgroundTransparency = 0.8
-Line.BorderSizePixel = 0
-Line.Parent = TitleFrame
-
--- Smooth gradient for line with faded edges
-local LineGradient = Instance.new("UIGradient")
-LineGradient.Color = ColorSequence.new{
-	ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
-	ColorSequenceKeypoint.new(0.5, Color3.new(1, 1, 1)),
-	ColorSequenceKeypoint.new(1, Color3.new(1, 1, 1))
-}
-LineGradient.Transparency = NumberSequence.new{
-	NumberSequenceKeypoint.new(0, 1),
-	NumberSequenceKeypoint.new(0.15, 0.2),
-	NumberSequenceKeypoint.new(0.85, 0.2),
-	NumberSequenceKeypoint.new(1, 1)
-}
-LineGradient.Parent = Line
-
--- Smooth bezel for line
-local LineCorner = Instance.new("UICorner")
-LineCorner.CornerRadius = UDim.new(0, 2)
-LineCorner.Parent = Line
-
--- Left sidebar for toggle list with container box (THINNER)
-local SidebarContainer = Instance.new("Frame")
-SidebarContainer.Name = "SidebarContainer"
-SidebarContainer.Size = UDim2.new(0, 140, 0, 280)
-SidebarContainer.Position = UDim2.new(0, 10, 0, 80)
-SidebarContainer.BackgroundColor3 = Color3.new(0.05, 0.05, 0.05)
-SidebarContainer.BackgroundTransparency = 0.8
-SidebarContainer.BorderSizePixel = 0
-SidebarContainer.Parent = MainFrame
-
--- Container rounded corners
-local ContainerCorner = Instance.new("UICorner")
-ContainerCorner.CornerRadius = UDim.new(0, 10)
-ContainerCorner.Parent = SidebarContainer
-
--- Container outline
-local ContainerStroke = Instance.new("UIStroke")
-ContainerStroke.Color = Color3.new(1, 1, 1)
-ContainerStroke.Thickness = 1
-ContainerStroke.Transparency = 0.8
-ContainerStroke.Parent = SidebarContainer
-
--- Sidebar frame inside container
-local Sidebar = Instance.new("Frame")
-Sidebar.Name = "Sidebar"
-Sidebar.Size = UDim2.new(1, -20, 1, -20)
-Sidebar.Position = UDim2.new(0, 10, 0, 10)
-Sidebar.BackgroundTransparency = 1
-Sidebar.Parent = SidebarContainer
-
--- Middle content area with container box (BIGGER HEIGHT, THINNER WIDTH)
-local ContentContainer = Instance.new("Frame")
-ContentContainer.Name = "ContentContainer"
-ContentContainer.Size = UDim2.new(0, 320, 0, 350)
-ContentContainer.Position = UDim2.new(0, 160, 0, 80)
-ContentContainer.BackgroundColor3 = Color3.new(0.05, 0.05, 0.05)
-ContentContainer.BackgroundTransparency = 0.8
-ContentContainer.BorderSizePixel = 0
-ContentContainer.ClipsDescendants = true
-ContentContainer.Parent = MainFrame
-
--- Container rounded corners for content
-local ContentContainerCorner = Instance.new("UICorner")
-ContentContainerCorner.CornerRadius = UDim.new(0, 10)
-ContentContainerCorner.Parent = ContentContainer
-
--- Container outline for content
-local ContentContainerStroke = Instance.new("UIStroke")
-ContentContainerStroke.Color = Color3.new(1, 1, 1)
-ContentContainerStroke.Thickness = 1
-ContentContainerStroke.Transparency = 0.8
-ContentContainerStroke.Parent = ContentContainer
-
--- Content frame inside container
-local ContentFrame = Instance.new("Frame")
-ContentFrame.Name = "ContentFrame"
-ContentFrame.Size = UDim2.new(1, -20, 1, -20)
-ContentFrame.Position = UDim2.new(0, 10, 0, 10)
-ContentFrame.BackgroundTransparency = 1
-ContentFrame.ClipsDescendants = true
-ContentFrame.Parent = ContentContainer
-
--- Scrolling frame for middle content
-local Scroller = Instance.new("ScrollingFrame")
-Scroller.Name = "Scroller"
-Scroller.Size = UDim2.new(1, 0, 1, 0)
-Scroller.Position = UDim2.new(0, 0, 0, 0)
-Scroller.BackgroundTransparency = 1
-Scroller.BorderSizePixel = 0
-Scroller.ScrollBarThickness = 4
-Scroller.ScrollBarImageColor3 = Color3.new(1, 1, 1)
-Scroller.ScrollBarImageTransparency = 0.7
-Scroller.CanvasSize = UDim2.new(0, 0, 0, 400)
-Scroller.Parent = ContentFrame
-
--- Bottom left player info
-local PlayerFrame = Instance.new("Frame")
-PlayerFrame.Name = "PlayerFrame"
-PlayerFrame.Size = UDim2.new(0, 480, 0, 60)
-PlayerFrame.Position = UDim2.new(0, 10, 1, -70)
-PlayerFrame.BackgroundTransparency = 1
-PlayerFrame.Parent = MainFrame
-
--- Avatar container (circular) - TRANSPARENT
-local AvatarFrame = Instance.new("Frame")
-AvatarFrame.Name = "AvatarFrame"
-AvatarFrame.Size = UDim2.new(0, 50, 0, 50)
-AvatarFrame.Position = UDim2.new(0, 0, 0, 5)
-AvatarFrame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
-AvatarFrame.BackgroundTransparency = 1
-AvatarFrame.Parent = PlayerFrame
-
--- Circular avatar mask
-local AvatarCorner = Instance.new("UICorner")
-AvatarCorner.CornerRadius = UDim.new(1, 0)
-AvatarCorner.Parent = AvatarFrame
-
-local AvatarStroke = Instance.new("UIStroke")
-AvatarStroke.Color = Color3.new(1, 1, 1)
-AvatarStroke.Thickness = 1.5
-AvatarStroke.Transparency = 0.5
-AvatarStroke.Parent = AvatarFrame
-
--- Avatar image
-local AvatarImage = Instance.new("ImageLabel")
-AvatarImage.Name = "AvatarImage"
-AvatarImage.Size = UDim2.new(1, -4, 1, -4)
-AvatarImage.Position = UDim2.new(0, 2, 0, 2)
-AvatarImage.BackgroundTransparency = 1
-AvatarImage.Image = "rbxthumb://type=AvatarHeadShot&id=" .. player.UserId .. "&w=150&h=150"
-AvatarImage.Parent = AvatarFrame
-
-local AvatarCorner2 = Instance.new("UICorner")
-AvatarCorner2.CornerRadius = UDim.new(1, 0)
-AvatarCorner2.Parent = AvatarImage
-
--- Player names
-local NameFrame = Instance.new("Frame")
-NameFrame.Name = "NameFrame"
-NameFrame.Size = UDim2.new(0, 200, 0, 50)
-NameFrame.Position = UDim2.new(0, 60, 0, 5)
-NameFrame.BackgroundTransparency = 1
-NameFrame.Parent = PlayerFrame
-
-local DisplayName = Instance.new("TextLabel")
-DisplayName.Name = "DisplayName"
-DisplayName.Size = UDim2.new(1, 0, 0, 25)
-DisplayName.Position = UDim2.new(0, 0, 0, 0)
-DisplayName.Text = player.DisplayName
-DisplayName.Font = Enum.Font.GothamSemibold
-DisplayName.TextSize = 16
-DisplayName.TextColor3 = Color3.new(1, 1, 1)
-DisplayName.BackgroundTransparency = 1
-DisplayName.TextXAlignment = Enum.TextXAlignment.Left
-DisplayName.Parent = NameFrame
-
-local UserName = Instance.new("TextLabel")
-UserName.Name = "UserName"
-UserName.Size = UDim2.new(1, 0, 0, 20)
-UserName.Position = UDim2.new(0, 0, 0, 25)
-UserName.Text = "@" .. player.Name
-UserName.Font = Enum.Font.Gotham
-UserName.TextSize = 14
-UserName.TextColor3 = Color3.new(1, 1, 1)
-UserName.TextTransparency = 0.4
-UserName.BackgroundTransparency = 1
-UserName.TextXAlignment = Enum.TextXAlignment.Left
-UserName.Parent = NameFrame
-
--- Variables to track active states
-local activeSidebarToggle = nil
-local activeSidebarTextLabel = nil
-
--- Toggle button template function with enhanced click animation
-local function CreateToggle(name, parent)
-	local Toggle = Instance.new("Frame")
-	Toggle.Name = name .. "Toggle"
-	Toggle.Size = UDim2.new(1, -10, 0, 45)
-	Toggle.BackgroundColor3 = Color3.new(0.08, 0.08, 0.08)
-	Toggle.BackgroundTransparency = 0.2
-	Toggle.BorderSizePixel = 0
-	
-	local ToggleCorner = Instance.new("UICorner")
-	ToggleCorner.CornerRadius = UDim.new(0, 10)
-	ToggleCorner.Parent = Toggle
-	
-	local ToggleLabel = Instance.new("TextLabel")
-	ToggleLabel.Name = "ToggleLabel"
-	ToggleLabel.Size = UDim2.new(1, -20, 1, 0)
-	ToggleLabel.Position = UDim2.new(0, 10, 0, 0)
-	ToggleLabel.Text = name
-	ToggleLabel.Font = Enum.Font.GothamSemibold
-	ToggleLabel.TextSize = 16
-	ToggleLabel.TextColor3 = Color3.new(1, 1, 1)
-	ToggleLabel.BackgroundTransparency = 1
-	ToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
-	ToggleLabel.Parent = Toggle
-	
-	local ToggleStroke = Instance.new("UIStroke")
-	ToggleStroke.Color = Color3.new(1, 1, 1)
-	ToggleStroke.Thickness = 1
-	ToggleStroke.Transparency = 1
-	ToggleStroke.Parent = Toggle
-	
-	-- Add a line under each toggle for active state (hidden by default)
-	local HorizontalLine = Instance.new("Frame")
-	HorizontalLine.Name = "HorizontalLine"
-	HorizontalLine.Size = UDim2.new(1, 0, 0, 2)
-	HorizontalLine.Position = UDim2.new(0, 0, 1, 0)
-	HorizontalLine.BackgroundColor3 = Color3.new(1, 1, 1)
-	HorizontalLine.BackgroundTransparency = 1
-	HorizontalLine.BorderSizePixel = 0
-	HorizontalLine.Parent = Toggle
-	
-	-- Smooth gradient for toggle line
-	local LineGradient = Instance.new("UIGradient")
-	LineGradient.Color = ColorSequence.new{
-		ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
-		ColorSequenceKeypoint.new(0.5, Color3.new(1, 1, 1)),
-		ColorSequenceKeypoint.new(1, Color3.new(1, 1, 1))
-	}
-	LineGradient.Transparency = NumberSequence.new{
-		NumberSequenceKeypoint.new(0, 1),
-		NumberSequenceKeypoint.new(0.15, 0.2),
-		NumberSequenceKeypoint.new(0.85, 0.2),
-		NumberSequenceKeypoint.new(1, 1)
-	}
-	LineGradient.Parent = HorizontalLine
-	
-	local LineCorner = Instance.new("UICorner")
-	LineCorner.CornerRadius = UDim.new(0, 1)
-	LineCorner.Parent = HorizontalLine
-	
-	-- Hover animation - show outline on hover
-	Toggle.MouseEnter:Connect(function()
-		if Toggle ~= activeSidebarToggle then
-			local tween = TweenService:Create(ToggleStroke, TweenInfo.new(0.2), {Transparency = 0.5})
-			tween:Play()
-		end
-	end)
-	
-	Toggle.MouseLeave:Connect(function()
-		if Toggle ~= activeSidebarToggle then
-			local tween = TweenService:Create(ToggleStroke, TweenInfo.new(0.2), {Transparency = 1})
-			tween:Play()
-		end
-	end)
-	
-	Toggle.Parent = parent
-	return Toggle, ToggleLabel
-end
-
--- Function to set a toggle as active (white with black text)
-local function SetToggleActive(toggleFrame, textLabel)
-	-- Reset previous active toggle
-	if activeSidebarToggle then
-		-- Reset to black with white text
-		local resetBg = TweenService:Create(activeSidebarToggle, TweenInfo.new(0.3), {
-			BackgroundColor3 = Color3.new(0.08, 0.08, 0.08),
-			BackgroundTransparency = 0.2
-		})
-		resetBg:Play()
-		
-		if activeSidebarTextLabel then
-			local resetText = TweenService:Create(activeSidebarTextLabel, TweenInfo.new(0.3), {
-				TextColor3 = Color3.new(1, 1, 1)
-			})
-			resetText:Play()
-		end
-		
-		-- Hide outline on previous active
-		local oldStroke = activeSidebarToggle:FindFirstChild("UIStroke")
-		if oldStroke then
-			local hideStroke = TweenService:Create(oldStroke, TweenInfo.new(0.3), {Transparency = 1})
-			hideStroke:Play()
-		end
-	end
-	
-	-- Play toggle sound
-	playToggleSound()
-	
-	-- Set new toggle as active (white with black text)
-	local setWhite = TweenService:Create(toggleFrame, TweenInfo.new(0.3), {
-		BackgroundColor3 = Color3.new(1, 1, 1),
-		BackgroundTransparency = 0
-	})
-	setWhite:Play()
-	
-	local setBlackText = TweenService:Create(textLabel, TweenInfo.new(0.3), {
-		TextColor3 = Color3.new(0, 0, 0)
-	})
-	setBlackText:Play()
-	
-	-- Show outline on new active
-	local newStroke = toggleFrame:FindFirstChild("UIStroke")
-	if newStroke then
-		local showStroke = TweenService:Create(newStroke, TweenInfo.new(0.3), {Transparency = 0.5})
-		showStroke:Play()
-	end
-	
-	-- Update active toggle tracking
-	activeSidebarToggle = toggleFrame
-	activeSidebarTextLabel = textLabel
-end
-
--- Credit button template
-local function CreateCreditButton(name, decalId, youtubeLink, parent, yPos)
-	local CreditButton = Instance.new("TextButton")
-	CreditButton.Name = name .. "CreditButton"
-	CreditButton.Size = UDim2.new(1, -20, 0, 80)
-	CreditButton.Position = UDim2.new(0, 10, 0, yPos)
-	CreditButton.Text = ""
-	CreditButton.BackgroundColor3 = Color3.new(0.08, 0.08, 0.08)
-	CreditButton.BackgroundTransparency = 0.2
-	CreditButton.BorderSizePixel = 0
-
-	local CreditCorner = Instance.new("UICorner")
-	CreditCorner.CornerRadius = UDim.new(0, 10)
-	CreditCorner.Parent = CreditButton
-
-	local CreditStroke = Instance.new("UIStroke")
-	CreditStroke.Color = Color3.new(1, 1, 1)
-	CreditStroke.Transparency = 1
-	CreditStroke.Thickness = 1
-	CreditStroke.Parent = CreditButton
-
-	-- Hover animation
-	CreditButton.MouseEnter:Connect(function()
-		local tween = TweenService:Create(CreditStroke, TweenInfo.new(0.2), {Transparency = 0.5})
-		tween:Play()
-	end)
-	
-	CreditButton.MouseLeave:Connect(function()
-		local tween = TweenService:Create(CreditStroke, TweenInfo.new(0.2), {Transparency = 1})
-		tween:Play()
-	end)
-
-	-- Name label
-	local NameLabel = Instance.new("TextLabel")
-	NameLabel.Name = "NameLabel"
-	NameLabel.Size = UDim2.new(1, -80, 1, 0)
-	NameLabel.Position = UDim2.new(0, 10, 0, 0)
-	NameLabel.Text = name
-	NameLabel.Font = Enum.Font.GothamBold
-	NameLabel.TextSize = 16
-	NameLabel.TextColor3 = Color3.new(1, 1, 1)
-	NameLabel.BackgroundTransparency = 1
-	NameLabel.TextXAlignment = Enum.TextXAlignment.Left
-	NameLabel.TextYAlignment = Enum.TextYAlignment.Center
-	NameLabel.Parent = CreditButton
-
-	-- Decal image
-	local DecalImage = Instance.new("ImageLabel")
-	DecalImage.Name = "DecalImage"
-	DecalImage.Size = UDim2.new(0, 60, 0, 60)
-	DecalImage.Position = UDim2.new(1, -70, 0.5, -30)
-	DecalImage.BackgroundTransparency = 1
-	DecalImage.Image = "rbxassetid://" .. decalId
-	DecalImage.Parent = CreditButton
-
-	local DecalCorner = Instance.new("UICorner")
-	DecalCorner.CornerRadius = UDim.new(0, 8)
-	DecalCorner.Parent = DecalImage
-
-	-- Click animation for credit button
-	CreditButton.MouseButton1Click:Connect(function()
-		local originalBg = CreditButton.BackgroundColor3
-		local originalTextColor = NameLabel.TextColor3
-		
-		playToggleSound()
-		
-		local fadeToWhite = TweenService:Create(CreditButton, TweenInfo.new(0.3), {BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0})
-		fadeToWhite:Play()
-		
-		local textToBlack = TweenService:Create(NameLabel, TweenInfo.new(0.3), {TextColor3 = Color3.new(0, 0, 0)})
-		textToBlack:Play()
-		
-		local imageToBlack = TweenService:Create(DecalImage, TweenInfo.new(0.3), {ImageColor3 = Color3.new(0, 0, 0)})
-		imageToBlack:Play()
-		
-		wait(0.3)
-		
-		local fadeBack = TweenService:Create(CreditButton, TweenInfo.new(0.3), {BackgroundColor3 = originalBg, BackgroundTransparency = 0.2})
-		fadeBack:Play()
-		
-		local textBack = TweenService:Create(NameLabel, TweenInfo.new(0.3), {TextColor3 = originalTextColor})
-		textBack:Play()
-		
-		local imageBack = TweenService:Create(DecalImage, TweenInfo.new(0.3), {ImageColor3 = Color3.new(1, 1, 1)})
-		imageBack:Play()
-	end)
-
-	CreditButton.Parent = parent
-	return CreditButton
-end
-
--- Item ID button template with gray square on the right (SHOWS HAT IMAGE ONLY - NO ID TEXT)
-local function CreateItemButton(name, parent, yPos, itemId)
-	local ItemContainer = Instance.new("Frame")
-	ItemContainer.Name = name .. "Container"
-	ItemContainer.Size = UDim2.new(1, -20, 0, 45)
-	ItemContainer.Position = UDim2.new(0, 10, 0, yPos)
-	ItemContainer.BackgroundTransparency = 1
-	ItemContainer.BorderSizePixel = 0
-	ItemContainer.Parent = parent
-
-	local ItemButton = Instance.new("TextButton")
-	ItemButton.Name = name .. "Button"
-	ItemButton.Size = UDim2.new(1, -55, 1, 0)
-	ItemButton.Position = UDim2.new(0, 0, 0, 0)
-	ItemButton.Text = name
-	ItemButton.Font = Enum.Font.GothamSemibold
-	ItemButton.TextSize = 16
-	ItemButton.TextColor3 = Color3.new(1, 1, 1)
-	ItemButton.BackgroundColor3 = Color3.new(0.08, 0.08, 0.08)
-	ItemButton.BackgroundTransparency = 0.2
-	ItemButton.BorderSizePixel = 0
-	ItemButton.Parent = ItemContainer
-
-	local ItemCorner = Instance.new("UICorner")
-	ItemCorner.CornerRadius = UDim.new(0, 10)
-	ItemCorner.Parent = ItemButton
-
-	-- Add outline for hover effect (transparent by default)
-	local ItemStroke = Instance.new("UIStroke")
-	ItemStroke.Name = "ItemStroke"
-	ItemStroke.Color = Color3.new(1, 1, 1)
-	ItemStroke.Transparency = 1  -- Start transparent
-	ItemStroke.Thickness = 1
-	ItemStroke.Parent = ItemButton
-
-	-- Gray square on the right (shows HAT IMAGE only)
-	local GraySquare = Instance.new("Frame")
-	GraySquare.Name = "GraySquare"
-	GraySquare.Size = UDim2.new(0, 45, 1, 0)
-	GraySquare.Position = UDim2.new(1, -45, 0, 0)
-	GraySquare.BackgroundColor3 = Color3.new(0.3, 0.3, 0.3)
-	GraySquare.BackgroundTransparency = 0.2
-	GraySquare.BorderSizePixel = 0
-	GraySquare.Parent = ItemContainer
-
-	local SquareCorner = Instance.new("UICorner")
-	SquareCorner.CornerRadius = UDim.new(0, 10)
-	SquareCorner.Parent = GraySquare
-
-	-- Add outline for gray square hover effect
-	local SquareStroke = Instance.new("UIStroke")
-	SquareStroke.Name = "SquareStroke"
-	SquareStroke.Color = Color3.new(1, 1, 1)
-	SquareStroke.Transparency = 1  -- Start transparent
-	SquareStroke.Thickness = 1
-	SquareStroke.Parent = GraySquare
-
-	-- Add image to gray square if itemId is provided - Using proper Roblox thumbnail method
-	if itemId then
-		local ItemImage = Instance.new("ImageLabel")
-		ItemImage.Name = "ItemImage"
-		ItemImage.Size = UDim2.new(0.8, 0, 0.8, 0)
-		ItemImage.Position = UDim2.new(0.1, 0, 0.1, 0)
-		ItemImage.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
-		ItemImage.BackgroundTransparency = 0.5
-		ItemImage.BorderSizePixel = 0
-		
-		-- IMPORTANT: Use the Roblox thumbnail API for asset preview
-		ItemImage.Image = "rbxthumb://type=Asset&id=" .. itemId .. "&w=150&h=150"
-		
-		ItemImage.Parent = GraySquare
-		
-		local ImageCorner = Instance.new("UICorner")
-		ImageCorner.CornerRadius = UDim.new(0, 6)
-		ImageCorner.Parent = ItemImage
-		
-		-- Add a simple hover effect
-		GraySquare.MouseEnter:Connect(function()
-			-- Slight scale effect on hover
-			local scaleUp = TweenService:Create(ItemImage, TweenInfo.new(0.2), {
-				Size = UDim2.new(0.9, 0, 0.9, 0),
-				Position = UDim2.new(0.05, 0, 0.05, 0)
-			})
-			scaleUp:Play()
-			
-			-- Make background less transparent on hover
-			local bgTween = TweenService:Create(ItemImage, TweenInfo.new(0.2), {
-				BackgroundTransparency = 0.2
-			})
-			bgTween:Play()
-		end)
-		
-		GraySquare.MouseLeave:Connect(function()
-			-- Scale back to original
-			local scaleDown = TweenService:Create(ItemImage, TweenInfo.new(0.2), {
-				Size = UDim2.new(0.8, 0, 0.8, 0),
-				Position = UDim2.new(0.1, 0, 0.1, 0)
-			})
-			scaleDown:Play()
-			
-			-- Restore background transparency
-			local bgTween = TweenService:Create(ItemImage, TweenInfo.new(0.2), {
-				BackgroundTransparency = 0.5
-			})
-			bgTween:Play()
-		end)
-	end
-
-	-- Check if player has the item equipped (for Item IDS and RIGS)
-	if itemId then
-		spawn(function()
-			local function checkIfEquipped()
-				local character = player.Character
-				if character then
-					for _, accessory in pairs(character:GetChildren()) do
-						if accessory:IsA("Accessory") then
-							local handle = accessory:FindFirstChild("Handle")
-							if handle then
-								local mesh = handle:FindFirstChildOfClass("SpecialMesh")
-								if mesh and mesh.TextureId then
-									-- Extract ID from rbxassetid URL
-									local textureId = mesh.TextureId:match("%d+")
-									if textureId == itemId then
-										-- Item is equipped - show green outline
-										ItemStroke.Color = Color3.new(0, 1, 0)
-										ItemStroke.Transparency = 0.3
-										return true
-									end
-								end
-							end
-						end
-					end
-				end
-				-- Item not equipped - reset to white
-				ItemStroke.Color = Color3.new(1, 1, 1)
-				ItemStroke.Transparency = 1
-				return false
-			end
-			
-			-- Initial check
-			checkIfEquipped()
-			
-			-- Monitor for changes
-			player.CharacterAdded:Connect(function(char)
-				wait(1)
-				checkIfEquipped()
-			end)
-			
-			if player.Character then
-				player.Character.ChildAdded:Connect(function()
-					wait(0.1)
-					checkIfEquipped()
-				end)
-				player.Character.ChildRemoved:Connect(function()
-					wait(0.1)
-					checkIfEquipped()
-				end)
-			end
-		end)
-	end
-
-	-- Hover animation for button (fade outline in/out)
-	ItemButton.MouseEnter:Connect(function()
-		if ItemStroke.Color == Color3.new(1, 1, 1) then
-			local tween = TweenService:Create(ItemStroke, TweenInfo.new(0.2), {Transparency = 0.3})
-			tween:Play()
-		end
-	end)
-	
-	ItemButton.MouseLeave:Connect(function()
-		if ItemStroke.Color == Color3.new(1, 1, 1) then
-			local tween = TweenService:Create(ItemStroke, TweenInfo.new(0.2), {Transparency = 1})
-			tween:Play()
-		end
-	end)
-
-	-- Hover animation for gray square (fade outline in/out)
-	GraySquare.MouseEnter:Connect(function()
-		local tween = TweenService:Create(SquareStroke, TweenInfo.new(0.2), {Transparency = 0.3})
-		tween:Play()
-	end)
-	
-	GraySquare.MouseLeave:Connect(function()
-		local tween = TweenService:Create(SquareStroke, TweenInfo.new(0.2), {Transparency = 1})
-		tween:Play()
-	end)
-
-	ItemButton.MouseButton1Click:Connect(function()
-		local originalBg = ItemButton.BackgroundColor3
-		local originalTextColor = ItemButton.TextColor3
-		
-		playToggleSound()
-		
-		local fadeToWhite = TweenService:Create(ItemButton, TweenInfo.new(0.3), {BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0})
-		fadeToWhite:Play()
-		
-		local textToBlack = TweenService:Create(ItemButton, TweenInfo.new(0.3), {TextColor3 = Color3.new(0, 0, 0)})
-		textToBlack:Play()
-		
-		local originalText = ItemButton.Text
-		ItemButton.Text = "Copied!"
-		
-		-- Copy item ID to clipboard
-		copyToClipboard(itemId or "")
-		
-		wait(0.3)
-		
-		local fadeBack = TweenService:Create(ItemButton, TweenInfo.new(0.3), {BackgroundColor3 = originalBg, BackgroundTransparency = 0.2})
-		fadeBack:Play()
-		
-		local textBack = TweenService:Create(ItemButton, TweenInfo.new(0.3), {TextColor3 = originalTextColor})
-		textBack:Play()
-		
-		wait(0.3)
-		
-		ItemButton.Text = originalText
-	end)
-
-	return ItemContainer
-end
-
--- Clear scroller content function
-local function ClearScroller()
-	for _, child in pairs(Scroller:GetChildren()) do
-		if child:IsA("GuiObject") then
-			child:Destroy()
-		end
-	end
-end
-
--- Function to hide all sidebar lines
-local function HideAllSidebarLines()
-	for _, toggle in pairs(Sidebar:GetChildren()) do
-		if toggle:IsA("Frame") then
-			local line = toggle:FindFirstChild("HorizontalLine")
-			if line then
-				local hideLine = TweenService:Create(line, TweenInfo.new(0.3), {BackgroundTransparency = 1})
-				hideLine:Play()
-			end
-		end
-	end
-end
-
--- Function to show line for specific toggle
-local function ShowLineForToggle(toggleFrame)
-	local line = toggleFrame:FindFirstChild("HorizontalLine")
-	if line then
-		local showLine = TweenService:Create(line, TweenInfo.new(0.3), {BackgroundTransparency = 0})
-		showLine:Play()
-	end
-end
-
--- Function to fade out all elements simultaneously
-local function FadeOutAll(callback)
-	local tweens = {}
-	
-	-- Fade out main frame
-	table.insert(tweens, TweenService:Create(MainFrame, TweenInfo.new(0.3), {BackgroundTransparency = 1}))
-	table.insert(tweens, TweenService:Create(UIStroke, TweenInfo.new(0.3), {Transparency = 1}))
-	
-	-- Fade out all GUI objects
-	for _, child in pairs(MainFrame:GetDescendants()) do
-		if child:IsA("TextLabel") or child:IsA("TextButton") then
-			table.insert(tweens, TweenService:Create(child, TweenInfo.new(0.3), {TextTransparency = 1}))
-		end
-		if child:IsA("Frame") or child:IsA("ScrollingFrame") then
-			if child.BackgroundTransparency < 1 then
-				table.insert(tweens, TweenService:Create(child, TweenInfo.new(0.3), {BackgroundTransparency = 1}))
-			end
-		end
-		if child:IsA("UIStroke") then
-			table.insert(tweens, TweenService:Create(child, TweenInfo.new(0.3), {Transparency = 1}))
-		end
-		if child:IsA("ImageLabel") then
-			table.insert(tweens, TweenService:Create(child, TweenInfo.new(0.3), {ImageTransparency = 1}))
-		end
-	end
-	
-	-- Play all tweens
-	for _, tween in pairs(tweens) do
-		tween:Play()
-	end
-	
-	wait(0.3)
-	if callback then callback() end
-end
-
--- Function to fade in all elements simultaneously
-local function FadeInAll()
-	local tweens = {}
-	
-	-- Fade in main frame
-	table.insert(tweens, TweenService:Create(MainFrame, TweenInfo.new(0.3), {BackgroundTransparency = 0.3}))
-	table.insert(tweens, TweenService:Create(UIStroke, TweenInfo.new(0.3), {Transparency = 0.7}))
-	
-	-- Fade in all GUI objects
-	for _, child in pairs(MainFrame:GetDescendants()) do
-		if child:IsA("TextLabel") or child:IsA("TextButton") then
-			local targetTransparency = 0
-			if child.Name == "UserName" then
-				targetTransparency = 0.4
-			elseif child.Name == "SubtitleLabel" then
-				targetTransparency = 0.6
-			end
-			table.insert(tweens, TweenService:Create(child, TweenInfo.new(0.3), {TextTransparency = targetTransparency}))
-		end
-		if child:IsA("Frame") or child:IsA("ScrollingFrame") then
-			if child.Name ~= "MainFrame" then
-				-- Keep button backgrounds at 0.2 transparency
-				if child.Name:match("Toggle") or child.Name:match("Button") or child.Name == "GraySquare" then
-					-- Don't fade in active sidebar toggle (keep it white)
-					if child ~= activeSidebarToggle then
-						table.insert(tweens, TweenService:Create(child, TweenInfo.new(0.3), {BackgroundTransparency = 0.2}))
-					end
-				elseif child.Name ~= "SidebarContainer" and child.Name ~= "ContentContainer" then
-					table.insert(tweens, TweenService:Create(child, TweenInfo.new(0.3), {BackgroundTransparency = 1}))
-				end
-			end
-		end
-		if child:IsA("UIStroke") and child.Parent.Name ~= "MainFrame" then
-			-- Don't fade in active toggle stroke
-			if child.Parent ~= activeSidebarToggle and not (child.Parent.Name:match("Button") or child.Parent.Name == "GraySquare") then
-				table.insert(tweens, TweenService:Create(child, TweenInfo.new(0.3), {Transparency = 1}))
-			elseif child.Parent.Name:match("Button") or child.Parent.Name == "GraySquare" then
-				table.insert(tweens, TweenService:Create(child, TweenInfo.new(0.3), {Transparency = 1})) -- Start transparent
-			end
-		end
-		if child:IsA("ImageLabel") then
-			table.insert(tweens, TweenService:Create(child, TweenInfo.new(0.3), {ImageTransparency = 0}))
-		end
-	end
-	
-	-- Special cases
-	table.insert(tweens, TweenService:Create(Line, TweenInfo.new(0.3), {BackgroundTransparency = 0.8}))
-	table.insert(tweens, TweenService:Create(AvatarStroke, TweenInfo.new(0.3), {Transparency = 0.5}))
-	table.insert(tweens, TweenService:Create(ContainerStroke, TweenInfo.new(0.3), {Transparency = 0.8}))
-	table.insert(tweens, TweenService:Create(ContentContainerStroke, TweenInfo.new(0.3), {Transparency = 0.8}))
-	
-	-- Play all tweens
-	for _, tween in pairs(tweens) do
-		tween:Play()
-	end
-end
-
--- Reanimation script database with all 38 scripts
-local reanimationScripts = {
+local playerGui = player:WaitForChild("PlayerGui")
+-- Create ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "GenesisFEGui"
+screenGui.ResetOnSpawn = false
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Parent = playerGui
+-- Detect platform (Mobile vs PC)
+local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+-- Set sizes based on platform
+local mainFrameSize = isMobile and UDim2.new(0, 220, 0, 220) or UDim2.new(0, 280, 0, 280)
+local toggleButtonSize = isMobile and UDim2.new(0, 40, 0, 40) or UDim2.new(0, 50, 0, 50)
+local titleSize = isMobile and 16 or 20
+local buttonTextSize = isMobile and 12 or 14
+local scrollHeight = isMobile and 165 or 210
+local scrollWidth = isMobile and 190 or 240
+local buttonHeight = isMobile and 40 or 45
+-- Toggle Button (Small draggable square)
+local toggleButton = Instance.new("TextButton")
+toggleButton.Name = "ToggleButton"
+toggleButton.Size = toggleButtonSize
+toggleButton.Position = UDim2.new(0, 20, 0.5, -25)
+toggleButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+toggleButton.BackgroundTransparency = 0.3
+toggleButton.BorderSizePixel = 0
+toggleButton.Text = ""
+toggleButton.Parent = screenGui
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(0, 16)
+toggleCorner.Parent = toggleButton
+local toggleBorder = Instance.new("UIStroke")
+toggleBorder.Color = Color3.fromRGB(255, 255, 255)
+toggleBorder.Thickness = 1
+toggleBorder.Transparency = 0.7
+toggleBorder.Parent = toggleButton
+-- Main Frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = mainFrameSize
+mainFrame.Position = isMobile and UDim2.new(0.5, -110, 0.5, -110) or UDim2.new(0.5, -140, 0.5, -140)
+mainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+mainFrame.BackgroundTransparency = 0.3
+mainFrame.BorderSizePixel = 0
+mainFrame.Visible = false
+mainFrame.Parent = screenGui
+-- Rounded corners for main frame
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 20)
+mainCorner.Parent = mainFrame
+-- Elegant white border
+local borderFrame = Instance.new("Frame")
+borderFrame.Size = UDim2.new(1, 2, 1, 2)
+borderFrame.Position = UDim2.new(0, -1, 0, -1)
+borderFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+borderFrame.BackgroundTransparency = 0.9
+borderFrame.BorderSizePixel = 0
+borderFrame.ZIndex = 0
+borderFrame.Parent = mainFrame
+local borderCorner = Instance.new("UICorner")
+borderCorner.CornerRadius = UDim.new(0, 20)
+borderCorner.Parent = borderFrame
+-- Title Label
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Name = "TitleLabel"
+titleLabel.Size = UDim2.new(1, 0, 0, isMobile and 40 or 45)
+titleLabel.Position = UDim2.new(0, 0, 0, 0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "Genesis FE Scripts"
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextSize = titleSize
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextTransparency = 0
+titleLabel.Parent = mainFrame
+-- Title underline
+local titleLine = Instance.new("Frame")
+titleLine.Size = isMobile and UDim2.new(0, 140, 0, 1) or UDim2.new(0, 180, 0, 1)
+titleLine.Position = isMobile and UDim2.new(0.5, -70, 0, 38) or UDim2.new(0.5, -90, 0, 43)
+titleLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+titleLine.BackgroundTransparency = 0.8
+titleLine.BorderSizePixel = 0
+titleLine.Parent = mainFrame
+local lineCorner = Instance.new("UICorner")
+lineCorner.CornerRadius = UDim.new(1, 0)
+lineCorner.Parent = titleLine
+-- Teleport Toggle Button (inside main frame - top left)
+local teleportToggle = Instance.new("TextButton")
+teleportToggle.Name = "TeleportToggle"
+teleportToggle.Size = isMobile and UDim2.new(0, 20, 0, 20) or UDim2.new(0, 24, 0, 24)
+teleportToggle.Position = isMobile and UDim2.new(0, 8, 0, 8) or UDim2.new(0, 8, 0, 8)
+teleportToggle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+teleportToggle.BackgroundTransparency = 0.6
+teleportToggle.BorderSizePixel = 0
+teleportToggle.Text = "T"
+teleportToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+teleportToggle.TextSize = isMobile and 10 or 12
+teleportToggle.Font = Enum.Font.GothamBold
+teleportToggle.TextTransparency = 0.1
+teleportToggle.Parent = mainFrame
+local teleportCorner = Instance.new("UICorner")
+teleportCorner.CornerRadius = UDim.new(0, 8)
+teleportCorner.Parent = teleportToggle
+local teleportBorder = Instance.new("UIStroke")
+teleportBorder.Color = Color3.fromRGB(255, 255, 255)
+teleportBorder.Thickness = 1
+teleportBorder.Transparency = 0.8
+teleportBorder.Parent = teleportToggle
+-- Universal Rigs Toggle Button (inside main frame - top right)
+local rigsToggle = Instance.new("TextButton")
+rigsToggle.Name = "RigsToggle"
+rigsToggle.Size = isMobile and UDim2.new(0, 20, 0, 20) or UDim2.new(0, 24, 0, 24)
+rigsToggle.Position = isMobile and UDim2.new(1, -52, 0, 8) or UDim2.new(1, -60, 0, 8)
+rigsToggle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+rigsToggle.BackgroundTransparency = 0.6
+rigsToggle.BorderSizePixel = 0
+rigsToggle.Text = "R"
+rigsToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+rigsToggle.TextSize = isMobile and 10 or 12
+rigsToggle.Font = Enum.Font.GothamBold
+rigsToggle.TextTransparency = 0.1
+rigsToggle.Parent = mainFrame
+local rigsCorner = Instance.new("UICorner")
+rigsCorner.CornerRadius = UDim.new(0, 8)
+rigsCorner.Parent = rigsToggle
+local rigsBorder = Instance.new("UIStroke")
+rigsBorder.Color = Color3.fromRGB(255, 255, 255)
+rigsBorder.Thickness = 1
+rigsBorder.Transparency = 0.8
+rigsBorder.Parent = rigsToggle
+-- Items Toggle Button (inside main frame - next to rigs)
+local itemsToggle = Instance.new("TextButton")
+itemsToggle.Name = "ItemsToggle"
+itemsToggle.Size = isMobile and UDim2.new(0, 20, 0, 20) or UDim2.new(0, 24, 0, 24)
+itemsToggle.Position = isMobile and UDim2.new(1, -28, 0, 8) or UDim2.new(1, -32, 0, 8)
+itemsToggle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+itemsToggle.BackgroundTransparency = 0.6
+itemsToggle.BorderSizePixel = 0
+itemsToggle.Text = "I"
+itemsToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+itemsToggle.TextSize = isMobile and 10 or 12
+itemsToggle.Font = Enum.Font.GothamBold
+itemsToggle.TextTransparency = 0.1
+itemsToggle.Parent = mainFrame
+local itemsToggleCorner = Instance.new("UICorner")
+itemsToggleCorner.CornerRadius = UDim.new(0, 8)
+itemsToggleCorner.Parent = itemsToggle
+local itemsToggleBorder = Instance.new("UIStroke")
+itemsToggleBorder.Color = Color3.fromRGB(255, 255, 255)
+itemsToggleBorder.Thickness = 1
+itemsToggleBorder.Transparency = 0.8
+itemsToggleBorder.Parent = itemsToggle
+-- ScrollingFrame for scripts
+local scrollFrame = Instance.new("ScrollingFrame")
+scrollFrame.Name = "ScrollFrame"
+scrollFrame.Size = UDim2.new(0, scrollWidth, 0, scrollHeight)
+scrollFrame.Position = isMobile and UDim2.new(0.5, -95, 0, 45) or UDim2.new(0.5, -120, 0, 50)
+scrollFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+scrollFrame.BackgroundTransparency = 0.7
+scrollFrame.BorderSizePixel = 0
+scrollFrame.ScrollBarThickness = isMobile and 4 or 5
+scrollFrame.ScrollBarImageColor3 = Color3.fromRGB(255, 255, 255)
+scrollFrame.ScrollBarImageTransparency = 0.6
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+scrollFrame.Parent = mainFrame
+local scrollCorner = Instance.new("UICorner")
+scrollCorner.CornerRadius = UDim.new(0, 16)
+scrollCorner.Parent = scrollFrame
+local scrollBorder = Instance.new("UIStroke")
+scrollBorder.Color = Color3.fromRGB(255, 255, 255)
+scrollBorder.Thickness = 1
+scrollBorder.Transparency = 0.9
+scrollBorder.Parent = scrollFrame
+local listLayout = Instance.new("UIListLayout")
+listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+listLayout.Padding = UDim.new(0, 10)
+listLayout.Parent = scrollFrame
+local padding = Instance.new("UIPadding")
+padding.PaddingTop = UDim.new(0, 12)
+padding.PaddingBottom = UDim.new(0, 12)
+padding.PaddingLeft = UDim.new(0, 12)
+padding.PaddingRight = UDim.new(0, 12)
+padding.Parent = scrollFrame
+-- Scripts data
+local scripts = {
     {name = "SIN DRAGON", url = "https://raw.githubusercontent.com/GenesisFE/Genesis/main/Obfuscations/Sin%20Dragon"},
     {name = "Lightning Cannon", url = "https://raw.githubusercontent.com/GenesisFE/Genesis/main/Obfuscations/Lightning%20Cannon"},
     {name = "Gale Fighter", url = "https://raw.githubusercontent.com/GenesisFE/Genesis/main/Obfuscations/Gale%20Fighter"},
@@ -954,710 +244,1394 @@ local reanimationScripts = {
     {name = "Simple Dancer", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Nitro-GT/Oxide/refs/heads/main/LoadstringPerma"))() loadstring(game:HttpGet("https://gist.githubusercontent.com/lolidkwhy678/8789dcee674b733f339fc9376e512287/raw/0faff48438c6091deb3b3672a430cdfb07417111"))() loadstring(game:HttpGet("https://raw.githubusercontent.com/gObl00x/My-Scripts/refs/heads/main/Epik%20R6%20Dancezz.lua"))()]]},
     {name = "DubStep", url = "https://raw.githubusercontent.com/BloxinStud10/24-Hours/refs/heads/main/Obfuscations/DubstepGun.luau"},
     {name = "Terraprisma", url = "https://raw.githubusercontent.com/randomstring0/Qwerty/refs/heads/main/qwerty54.lua"},
+    -- NEW ADDITIONS
     {name = "Tenna", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/IMSOSIGMA12/Tenna/refs/heads/main/TvTime"))()]]},
     {name = "List of forsaken characters", code = [[loadstring(game:HttpGet("https://api.luarmor.net/files/v3/loaders/b30aae8f2ef544de8c9d1f8b849e6bdb.lua"))()]]}
 }
-
--- Extract just the names for the reanimateNames list
-local reanimateNames = {}
-for _, scriptData in ipairs(reanimationScripts) do
-    table.insert(reanimateNames, scriptData.name)
-end
-
--- Function to execute reanimation script with config support (SILENT - NO NOTIFICATIONS)
-local function ExecuteReanimation(scriptData)
-    -- Play toggle sound only (no visual notification)
-    
-    -- Execute the script silently
-    local success, errorMsg = pcall(function()
-        -- Set config if available
-        if scriptData.config then
-            _G.ReanimationConfig = scriptData.config
-        end
-        
-        -- Execute based on what's available (code takes priority)
-        if scriptData.code then
-            loadstring(scriptData.code)()
-        elseif scriptData.url then
-            -- For rawscripts.net URLs, we need to handle them differently
-            if string.find(scriptData.url, "rawscripts.net") then
-                -- Try to get the actual script from rawscripts
-                local scriptContent = game:HttpGet(scriptData.url)
-                loadstring(scriptContent)()
-            else
-                -- Regular GitHub or gist URLs
-                loadstring(game:HttpGet(scriptData.url))()
+-- Item data for Lightning Cannon info
+local itemData = {
+    {category = "C00LKIDD ITEMS", items = {
+        {name = "White Block for throwing block", url = "https://www.roblox.com/catalog/12383790958/Faceless-Block-Head-Tone9"},
+        {name = "Glitched dummy for ability", url = "https://www.roblox.com/catalog/98099894849025/VHS-Glitched-Dummy-Animated"},
+    }},
+    {category = "NOLI ITEMS", items = {
+        {name = "Noli star for nova", url = "https://www.roblox.com/catalog/74013526892143/Noli-GLOWING-Star-Forsaken-White"},
+        {name = "Glitched dummy for ability", url = "https://www.roblox.com/catalog/98099894849025/VHS-Glitched-Dummy-Animated"},
+        {name = "Noli crown", url = "https://www.roblox.com/catalog/126461620175785/Noli-Crown"},
+    }},
+    {category = "BLACK LIGHTNING CANNON", items = {
+        {name = "Black cannon part P1", url = "https://www.roblox.com/catalog/117311153426168/Lightning-Cannon-V2-P1"},
+        {name = "Black cannon part P2", url = "https://www.roblox.com/catalog/116940095199813/Lightning-Cannon-V2-P2"},
+        {name = "Black cannon Black head", url = "https://www.roblox.com/catalog/135845211993815/Lightning-Cannon-V2-Head"},
+        {name = "HEAD", url = "https://www.roblox.com/catalog/14160471787/Old-Retro-Face-Black"},
+        {name = "TORSO", url = "https://www.roblox.com/catalog/138364679836274/Torso-Extension"},
+        {name = "LEFT ARM", url = "https://www.roblox.com/catalog/85392395166623/Black-Left-Arm"},
+        {name = "RIGHT ARM", url = "https://www.roblox.com/catalog/131385506535381/Black-Right-Arm"},
+        {name = "LEFT LEG", url = "https://www.roblox.com/catalog/106249329428811/Black-Left-Leg"},
+        {name = "RIGHT LEG", url = "https://www.roblox.com/catalog/129462518582032/Black-Right-Leg"},
+        {name = "Bullet", url = "https://www.roblox.com/catalog/4504231783/Elemental-Crystal-Golem-Shoulder-Rock"}
+    }},
+    {category = "WHITE LIGHTNING CANNON", items = {
+        {name = "White cannon P1", url = "https://www.roblox.com/catalog/136055191177936/Lightning-Cannon-P1"},
+        {name = "White cannon P2", url = "https://www.roblox.com/catalog/126145101810389/Lightning-Cannon-P2"},
+        {name = "White cannon head", url = "https://www.roblox.com/catalog/111672581230926/Lightning-Cannon-Head"},
+        {name = "HEAD", url = "https://www.roblox.com/catalog/14160473681/Classic-Face-Black"},
+        {name = "TORSO", url = "https://www.roblox.com/catalog/128948172708607/White-Torso"},
+        {name = "LEFT ARM", url = "https://www.roblox.com/catalog/102599402682100/White-Arm-Extension"},
+        {name = "RIGHT ARM", url = "https://www.roblox.com/catalog/82942681251131/White-Arm-Extension"},
+        {name = "LEFT LEG", url = "https://www.roblox.com/catalog/140395948277978/White-Arm-Extension"},
+        {name = "RIGHT LEG", url = "https://www.roblox.com/catalog/90960046381276/White-Arm-Extension"},
+        {name = "Bullet", url = "https://www.roblox.com/catalog/4504231783/Elemental-Crystal-Golem-Shoulder-Rock"}
+    }},
+    {category = "Neptunian V", items = {
+        {name = "Void Large Sword", url = "https://www.roblox.com/catalog/5268602207/Void-Lord-Sword"},
+        {name = "Demon God Sword", url = "https://www.roblox.com/catalog/5316479641/Demon-God-Sword"},
+        {name = "Rainbow God Sword", url = "https://www.roblox.com/catalog/5316539421/Rainbow-God-Sword"},
+        {name = "Holloween Sword", url = "https://www.roblox.com/catalog/5699795428/Halloween-Sword"},
+        {name = "Aurora Sword", url = "https://www.roblox.com/catalog/5316549755/Aurora-Sword"},
+        {name = "Corrupt Lord Sword", url = "https://www.roblox.com/catalog/5268710380/Corrupt-Lord-Sword"},
+        {name = "Toxic Lord Sword", url = "https://www.roblox.com/catalog/5268720002/Toxic-Lord-Sword"},
+        {name = "Golden Demonic GreatSword", url = "https://www.roblox.com/catalog/4794315940/Golden-Demonic-Greatsword"},
+        {name = "Demonic Greatsword", url = "https://www.roblox.com/catalog/4315489767/Demonic-Greatsword"},
+        {name = "Corrupt Demonic Greatsword", url = "https://www.roblox.com/catalog/4506945409/Corrupt-Demonic-Greatsword"},
+        {name = "Frozen Demonic Greatsword", url = "https://www.roblox.com/catalog/4458601937/Frozen-Demonic-Greatsword"}
+    }},
+    {category = "AK-47", items = {
+        {name = "Eminence White Purple", url = "https://www.roblox.com/catalog/14847744375/Eminence-White-Purple"},
+        {name = "Bullet", url = "https://www.roblox.com/catalog/4504231783/Elemental-Crystal-Golem-Shoulder-Rock"}
+    }},
+    {category = "Normal BanHammer", items = {
+        {name = "Normal BanHammer", url = "https://www.roblox.com/catalog/15427288323/XL-Banhammer-back"},
+        {name = "Rainbow BanHammer", url = "https://www.roblox.com/catalog/15548353353/XL-Rainbow-Banhammer-back"},
+        {name = "Blue BanHammer", url = "https://www.roblox.com/catalog/15548329516/XL-Blue-Icedagger-Banhammer-back"},
+        {name = "Black BanHammer", url = "https://www.roblox.com/catalog/15548314241/XL-Black-Darkheart-Banhammer-back"},
+        {name = "Red BanHammer", url = "https://www.roblox.com/catalog/15548317357/XL-Red-Firebrand-Banhammer-back"},
+        {name = "Pink BanHammer", url = "https://www.roblox.com/catalog/15548348256/XL-Pink-Banhammer-back"},
+        {name = "White BanHammer", url = "https://www.roblox.com/catalog/15548324701/XL-White-Ghostwalker-Banhammer-back"},
+        {name = "Golden BanHammer", url = "https://www.roblox.com/catalog/15582048618/XL-Golden-Banhammer-back"},
+        {name = "Epic Face BanHammer", url = "https://www.roblox.com/catalog/15548350762/XL-Epic-Face-Banhammer-back"},
+        {name = "Illumina BanHammer", url = "https://www.roblox.com/catalog/15548332386/XL-Illumina-Banhammer-back"}
+    }},
+    {category = "Classic Linked", items = {
+        {name = "Linked Sword", url = "https://www.roblox.com/catalog/14775039887/Classic-Linked-Sword-Waist"},
+        {name = "Baller Head", url = "https://www.roblox.com/catalog/11480029711/Baller-Head"},
+        {name = "Rocket Launcher", url = "https://www.roblox.com/catalog/12402087358/Retro-Rocket-Launcher-Replica"},
+        {name = "Bomb Hat", url = "https://www.roblox.com/catalog/15925628459/Bomb-Hat"}
+    }},
+    {category = "MiniGun", items = {
+        {name = "Type-9000-MiniGun", url = "https://www.roblox.com/catalog/6775268462/Type-9000-Minigun"},
+        {name = "Double MiniGun", url = "https://www.roblox.com/catalog/15360521799/Double-Mini-gun-back-Gun"},
+        {name = "Green MiniGun", url = "https://www.roblox.com/catalog/17598434795/Military-S-T-R-Y-K-E-R-Minigun-back-Green"},
+        {name = "Orange MiniGun", url = "https://www.roblox.com/catalog/17598212551/Military-S-T-R-Y-K-E-R-Minigun-back-Orange"},
+        {name = "Pixel MiniGun (RED)", url = "https://www.roblox.com/catalog/17174236857/Pixel-Minigun"},
+        {name = "Normal Pixel MiniGun", url = "https://www.roblox.com/catalog/17382649150/Pixel-Champion-Minigun"},
+        {name = "Bullet", url = "https://www.roblox.com/catalog/4504231783/Elemental-Crystal-Golem-Shoulder-Rock"}
+    }},
+    {category = "Puppet Master", items = {
+        {name = "Noob Doll", url = "https://www.roblox.com/catalog/15222706412/Noob"},
+        {name = "Normal Doll", url = "https://www.roblox.com/catalog/10928635418/Ritual-Doll"},
+        {name = "Neko Doll", url = "https://www.roblox.com/catalog/18133579816/Pink-Haired-Girl-Plush-Cute-Madoka-Kaname-Cutecore"},
+        {name = "Shy Purple Anime Doll", url = "https://www.roblox.com/catalog/15489065122/Shy-Purple-Anime-Girl-Plushie"},
+        {name = "Hair w/ Hat", url = "https://www.roblox.com/catalog/17100974890/Messy-Black-Hair-w-Wide-Brim-Hat"},
+        {name = "Creepy Glare Mask", url = "https://www.roblox.com/catalog/7394540066/Creepy-Glare-Mask"},
+        {name = "Black Knife", url = "https://www.roblox.com/catalog/14132341804/Prop-Black-Knife-Waist"},
+        {name = "Red Knife", url = "https://www.roblox.com/catalog/7170689370/Red-Swag-Knife"},
+        {name = "Purple Knife", url = "https://www.roblox.com/catalog/7170800750/Purple-Swag-Knife"},
+        {name = "Yellow Knife", url = "https://www.roblox.com/catalog/7170685020/Yellow-Swag-Knife"},
+        {name = "White Knife", url = "https://www.roblox.com/catalog/7170680556/White-Swag-Knife"},
+        {name = "Match Lighter", url = "https://www.roblox.com/catalog/15995270436/Match"},
+        {name = "Black Vintage Lighter", url = "https://www.roblox.com/catalog/18592935983/Vintage-Lighter-1-0"},
+        {name = "Red Magic Ring", url = "https://www.roblox.com/catalog/13724337704/Ash-Magic-Circle"},
+        {name = "Poison Magic Ring", url = "https://www.roblox.com/catalog/13745947080/Poison-Magic-Circle"},
+        {name = "Shadow Magic Ring", url = "https://www.roblox.com/catalog/13491263026/Shadow-Magic-Circle"},
+        {name = "Rainbow Magic Ring", url = "https://www.roblox.com/catalog/13492627277/Rainbow-Fire-Magic-Circle"},
+        {name = "Glass Magic Ring", url = "https://www.roblox.com/catalog/13803062999/Glass-Magic-Circle"},
+        {name = "Fire Magic Ring", url = "https://www.roblox.com/catalog/13489994318/Fire-Magic-Circle"}
+    }},
+    {category = "Good Cop Bad Cop", items = {
+        {name = "Blue Baton", url = "https://www.roblox.com/catalog/12978620178/Waist-Stun-Baton-Blue"},
+        {name = "Normal Baton", url = "https://www.roblox.com/catalog/12980424553/Waist-Stun-Baton"},
+        {name = "Red Baton", url = "https://www.roblox.com/catalog/12979137927/Waist-Stun-Baton-Red"},
+        {name = "Orange Baton", url = "https://www.roblox.com/catalog/12980340684/Waist-Stun-Baton-Orange"},
+        {name = "Normal Baton 2", url = "https://www.roblox.com/catalog/8590591043/Nightstick"},
+        {name = "Emerald Gun", url = "https://www.roblox.com/catalog/14561260228/Emerald-Gun"},
+        {name = "Blue Gun", url = "https://www.roblox.com/catalog/12830343073/Blue-Cyber-Heavy-Revolver-Right"},
+        {name = "Bullet", url = "https://www.roblox.com/catalog/4504231783/Elemental-Crystal-Golem-Shoulder-Rock"}
+    }},
+    {category = "Neko", items = {
+        {name = "Prop Knife Kawaii P1", url = "https://www.roblox.com/catalog/14132081157/Prop-Kawaii-Knife"},
+        {name = "Prop Knife Kawaii P2", url = "https://www.roblox.com/catalog/14132338037/Prop-Kawaii-Knife-Waist"},
+        {name = "Pink Prop Knife Two P1", url = "https://www.roblox.com/catalog/10928981782/Pink-Heartsteel-WH"},
+        {name = "Pink Prop Knife Two P2", url = "https://www.roblox.com/catalog/10928777338/Pink-Heartsteel-BH"},
+        {name = "Pink Prop Knife Three P1", url = "https://www.roblox.com/catalog/12713501445/1-0-Pink-Knife"},
+        {name = "Pink Prop Knife Three P2", url = "https://www.roblox.com/catalog/12713533733/Pink-Knife-Prop"},
+        {name = "White Ball P1 (Boob)", url = "https://www.roblox.com/catalog/5645497792/Confused-Stick"},
+        {name = "White Ball P2 (Boob)", url = "https://www.roblox.com/catalog/5645498661/Cute-Stick"},
+        {name = "Black Ball P1 (Boob)", url = "https://www.roblox.com/catalog/13760253770/Big-Matte-Black-Sphere"},
+        {name = "Black Ball P2 (Boob)", url = "https://www.roblox.com/catalog/14852217948/Big-Matte-Grey-Sphere"}
+    }},
+    {category = "GONER", items = {
+        {name = "Goner Head", url = "https://www.roblox.com/catalog/17770317484/Goners-Head"},
+        {name = "Goner Blade P1", url = "https://www.roblox.com/catalog/17771175724/Goners-Blade-Waist"},
+        {name = "Goner Blade P2", url = "https://www.roblox.com/catalog/17835236579/Goners-Blade-Back"},
+        {name = "Goner Left Arm Spikes", url = "https://www.roblox.com/catalog/17822749561/Goners-Left-Arm-Spikes"},
+        {name = "Goner Right Arm Spikes", url = "https://www.roblox.com/catalog/17822722698/Goners-Right-Arm-Spikes"},
+        {name = "Goner Back Spikes", url = "https://www.roblox.com/catalog/17772174303/Goners-Body-Spikes"},
+        {name = "TORSO", url = "https://www.roblox.com/catalog/138364679836274/Torso-Extension"},
+        {name = "LEFT ARM", url = "https://www.roblox.com/catalog/85392395166623/Black-Left-Arm"},
+        {name = "RIGHT ARM", url = "https://www.roblox.com/catalog/131385506535381/Black-Right-Arm"},
+        {name = "LEFT LEG", url = "https://www.roblox.com/catalog/106249329428811/Black-Left-Leg"},
+        {name = "RIGHT LEG", url = "https://www.roblox.com/catalog/129462518582032/Black-Right-Leg"}
+    }},
+    {category = "Banisher", items = {
+        {name = "Heavy Pulse Rifle", url = "https://www.roblox.com/catalog/5164517317/Mk-82-Heavy-Pulse-Rifle"},
+        {name = "Heavy Pulse Rifle 2.0", url = "https://www.roblox.com/catalog/5164509129/Mk-82-C7-Heavy-Pulse-Rifle"},
+        {name = "RailGun", url = "https://www.roblox.com/catalog/4623059912/Starslayer-Railgun"},
+        {name = "Bullet", url = "https://www.roblox.com/catalog/4504231783/Elemental-Crystal-Golem-Shoulder-Rock"}
+    }},
+    {category = "Pistol", items = {
+        {name = "Green Revolver", url = "https://www.roblox.com/catalog/12830351516/Green-Cyber-Heavy-Revolver-Left"},
+        {name = "Blue Revolver", url = "https://www.roblox.com/catalog/12830338562/Blue-Cyber-Heavy-Revolver-Left"},
+        {name = "Ancient Plasma Pistol", url = "https://www.roblox.com/catalog/11694545311/Ancient-Plasma-Pistol"},
+        {name = "Bullet", url = "https://www.roblox.com/catalog/4504231783/Elemental-Crystal-Golem-Shoulder-Rock"}
+    }},
+    {category = "SIN DRAGON", items = {
+        {name = "Dragon Head P1", url = "https://www.roblox.com/catalog/111793953309477/Dragon-backpack-part-1"},
+        {name = "Dragon Head P2", url = "https://www.roblox.com/catalog/113048125789248/Dragon-backpack-part-2"},
+        {name = "Dragon Claw Black", url = "https://www.roblox.com/catalog/10238814782/Black-Dragon-Claw-Face-Hand"},
+        {name = "Dragon Claw White", url = "https://www.roblox.com/catalog/10239245976/White-Dragon-Claw-Face-Hand"},
+        {name = "Aura Effect", url = "https://www.roblox.com/catalog/16755111087/Purple-Anime-Aura"},
+        {name = "Small Dragon Claw 1", url = "https://www.roblox.com/catalog/117186631495734/small-claw"},
+        {name = "Small Dragon Claw 2", url = "https://www.roblox.com/catalog/132770514241770/small-claw-2"},
+        {name = "Beam", url = "https://www.roblox.com/catalog/4504231783/Elemental-Crystal-Golem-Shoulder-Rock"}
+    }},
+    {category = "HACKLORD ITEMS", items = {
+        {name = "HackLord Sword on back", url = "https://www.roblox.com/catalog/106895658225908/Hacklord-Sword"},
+        {name = "HackLord Shirt one", url = "https://www.roblox.com/catalog/116480972579936/HACKLORD-1x1x1x1-Shedletsky"},
+        {name = "HackLord Casket", url = "https://www.roblox.com/catalog/135410154517249/HACKLORD-1x1x1x1-Shedletsky"},
+        {name = "HackLord Crown", url = "https://www.roblox.com/catalog/105433204930926/Hacklord"},
+        {name = "HackLord Face", url = "https://www.roblox.com/catalog/137808231808447/Hacklord"},
+        {name = "HackLord Left Arm", url = "https://www.roblox.com/catalog/110693960146571/OFFICIAL-Hacklords-Left-Sleeve"},
+        {name = "HackLord Right Arm", url = "https://www.roblox.com/catalog/138934488961238/OFFICIAL-Hacklords-Right-Sleeve"},
+        {name = "HackLord Torso", url = "https://www.roblox.com/catalog/84452359312672/OFFICIAL-Hacklords-Inside-Coat-and-Scarf"},
+        {name = "Main HackLord sword", url = "https://www.roblox.com/catalog/112311161810826/Hacklord-Shedletskys-Greatsword-of-Hatred"},
+        {name = "HackLord Dummy", url = "https://www.roblox.com/catalog/123845356193764/Black-VHS-Glitched-Dummy-Animated"},
+        {name = "HackLord Left Leg", url = "https://www.roblox.com/catalog/106249329428811/Black-Left-Leg"},
+        {name = "HackLord Right Leg", url = "https://www.roblox.com/catalog/129462518582032/Black-Right-Leg"},
+        {name = "The Erlking Greatsword V2", url = "https://www.roblox.com/catalog/18972529464/The-Erlkings-Greatsword-V2"},
+        {name = "Void Titan Greatsword", url = "https://www.roblox.com/catalog/11460084205/Void-Titan-Greatsword"},
+        {name = "Black Sword", url = "https://www.roblox.com/catalog/96606079405209/Black-Sword"},
+        {name = "Big Greatsword", url = "https://www.roblox.com/catalog/131348586827675/Big-Greatsword"},
+        {name = "Biggest Greatsword", url = "https://www.roblox.com/catalog/76313018969279/Biggest-Greatsword"},
+        {name = "Void Evil Knight Greatsword", url = "https://www.roblox.com/catalog/11495244307/Void-Evil-Knight-Greatsword"},
+        {name = "Purple GreatSword", url = "https://www.roblox.com/catalog/4506945409/Corrupt-Demonic-Greatsword"},
+        {name = "Cyan GreatSword", url = "https://www.roblox.com/catalog/4458601937/Frozen-Demonic-Greatsword"},
+        {name = "DarkHeart Sword", url = "https://www.roblox.com/catalog/102043780869380/Darkheart-Back"},
+        {name = "GhostWalker Sword", url = "https://www.roblox.com/catalog/91026685566277/Ghostwalker-Back"},
+        {name = "Classic Sword", url = "https://www.roblox.com/catalog/78396622993231/Classic-Sword"},
+        {name = "Katana Sword", url = "https://www.roblox.com/catalog/16315380517/Sword"},
+        {name = "Golden Sword", url = "https://www.roblox.com/catalog/11330989470/Sword"},
+        {name = "God Sword", url = "https://www.roblox.com/catalog/18806029251/Sword"},
+        {name = "1x1x1x1x1 Sword", url = "https://www.roblox.com/catalog/118009299022227/1x1x1x1x1"},
+        {name = "HackLord Sword 2", url = "https://www.roblox.com/catalog/121290673270759/OFFICIAL-The-Hacklords-Venom-Greatsword"},
+        {name = "Halloween Black Moon Witch Backdrop", url = "https://www.roblox.com/catalog/80979029181126/Halloween-Black-Moon-Witch-Backdrop"},
+        {name = "Crescent sigilism moon", url = "https://www.roblox.com/catalog/87110799539894/Crescent-sigilism-moon"},
+        {name = "Blue Ornate Moon Background", url = "https://www.roblox.com/catalog/10971858125/Ornate-Moon-Background-Blue"},
+        {name = "White Ornate Moon Background", url = "https://www.roblox.com/catalog/12332919426/Ornate-Moon-Background-White"},
+        {name = "Hotdog Suit", url = "https://www.roblox.com/catalog/5028584774/Hotdog-Suit"},
+        {name = "Banana Suit", url = "https://www.roblox.com/catalog/4962552589/Banana-Suit"},
+        {name = "Iron Coffin", url = "https://www.roblox.com/catalog/15230527145/Iron-maiden"},
+        {name = "Coffin", url = "https://www.roblox.com/catalog/135731544879121/Coffin"},
+        {name = "Erlking Coffin", url = "https://www.roblox.com/catalog/118644874678351/Erlking-Heathcliffs-Catherines-Coffin"},
+        {name = "Wild Hunt Heathcliffs Coffin", url = "https://www.roblox.com/catalog/18999927321/Wild-Hunt-Heathcliffs-Iron-Maiden-Coffin"},
+        {name = "HackLord Head", url = "https://www.roblox.com/catalog/104601744330910/HACKLORD-1x1x1x1-Shedletsky"}
+    }},
+    {category = "STARGLITCHER 2.0 ITEMS", items = {
+        {name = "Star glitcher sword one item id", url = "https://www.roblox.com/catalog/5316479641/Demon-God-Sword"},
+        {name = "Star glitcher two item id", url = "https://www.roblox.com/catalog/5316539421/Rainbow-God-Sword"},
+        {name = "Star glitcher three item id", url = "https://www.roblox.com/catalog/5316549755/Aurora-Sword"},
+        {name = "Star glitcher four item id", url = "https://www.roblox.com/catalog/5699795428/Halloween-Sword"}
+    }},
+    {category = "PURSUER ITEMS", items = {
+        {name = "Pursuer Dummy glichted", url = "https://www.roblox.com/catalog/98099894849025/VHS-Glitched-Dummy-Animated"},
+        {name = "Pursuer head", url = "https://www.roblox.com/catalog/105174490519943/Pursuer-Head-Die-Of-Death"},
+        {name = "Pursuer sword one", url = "https://www.roblox.com/catalog/94622218233849/Pursuer-Die-of-Death-Sword-Waist"},
+        {name = "Pursuer sword two", url = "https://www.roblox.com/catalog/93396547702776/Pursuer-Die-of-Death"},
+        {name = "TORSO", url = "https://www.roblox.com/catalog/138364679836274/Torso-Extension"},
+        {name = "LEFT ARM", url = "https://www.roblox.com/catalog/85392395166623/Black-Left-Arm"},
+        {name = "RIGHT ARM", url = "https://www.roblox.com/catalog/131385506535381/Black-Right-Arm"},
+        {name = "LEFT LEG", url = "https://www.roblox.com/catalog/106249329428811/Black-Left-Leg"},
+        {name = "RIGHT LEG", url = "https://www.roblox.com/catalog/129462518582032/Black-Right-Leg"},
+        {name = "Minecraft Diamond Sword", url = "https://www.roblox.com/catalog/18566246244/Diamond-Sword"},
+        {name = "White Pumpkin Diamond Axe", url = "https://www.roblox.com/catalog/140088091435468/White-Pumpkin-Diamond-Axe-Forsaken"},
+        {name = "Forsaken TOON sword", url = "https://www.roblox.com/catalog/96343269446448/FORSAKEN-Toon-1x1x1x1-Sword"},
+        {name = "Red Real Knife", url = "https://www.roblox.com/catalog/13791877812/Red-Real-Knife"},
+        {name = "Undyne Spear of Justice", url = "https://www.roblox.com/catalog/135594174508502/Undyne-Spear-of-Justice"},
+        {name = "DarkHeart P1", url = "https://www.roblox.com/catalog/18877079510/Darkheart"},
+        {name = "DarkHeart P2", url = "https://www.roblox.com/catalog/14775020059/Darkheart-Waist"},
+        {name = "Kris Sword P1", url = "https://www.roblox.com/catalog/131895494199007/Kris-Sword-Deltarune-Back"},
+        {name = "Kris Sword P2", url = "https://www.roblox.com/catalog/80425865712106/Kris-Sword-Waist"},
+        {name = "PvZ Zombie CutOut", url = "https://www.roblox.com/catalog/132111438882232/Zombie-PvZ-Cutout"},
+        {name = "Birthday Pinata Buddy", url = "https://www.roblox.com/catalog/18100924519/Birthday-Pinata-Buddy-Add-on"},
+        {name = "Skeleton Bear White", url = "https://www.roblox.com/catalog/70399600466603/Skeleton-bear-white"},
+        {name = "Undertale Papyrus Cutout", url = "https://www.roblox.com/catalog/115797927844321/Undertale-Papyrus"},
+        {name = "Extra Shedletsky Dummy", url = "https://www.roblox.com/catalog/117662564986871/Extra-Shedletsky"}
+    }},
+    {category = "JASON ITEMS", items = {
+        {name = "Two Time buddy", url = "https://www.roblox.com/catalog/138480343439270/Two-Time-buddy"},
+        {name = "Fire axe", url = "https://www.roblox.com/catalog/5555611932/Fireaxe"},
+        {name = "Red Chainsaw Sword", url = "https://www.roblox.com/catalog/14952103037/Red-Chainsaw-Sword"},
+        {name = "Jason mask", url = "https://www.roblox.com/catalog/103821169902048/Jason-Forsaken-Mask"},
+        {name = "Penguin", url = "https://www.roblox.com/catalog/8275940644/Emperor-Penguin"},
+        {name = "Eraser Cat", url = "https://www.roblox.com/catalog/89788338095437/Eraser-Cat"},
+        {name = "Jason Vorhees Machete", url = "https://www.roblox.com/catalog/106118632964784/Jason-Vorhees-Machete"},
+        {name = "DOOM Chainsaw", url = "https://www.roblox.com/catalog/89661258615392/DOOM-Chainsaw"},
+        {name = "DOOM Sword Crucible", url = "https://www.roblox.com/catalog/111163795354946/DOOM-Sword-Crucible"}
+    }},
+    {category = "ADMIN NOLI ITEMS", items = {
+        {name = "Btool Devesto", url = "https://www.roblox.com/catalog/89392828628286/Devestos-F3X-Forsaken-Die-of-Death-Waist-Holdable"}
+    }},
+    {category = "BLADE BALL ITEMS", items = {
+        {name = "Ball", url = "https://www.roblox.com/catalog/6685365462/Red-Stickman-Head"},
+        {name = "Blade", url = "https://www.roblox.com/catalog/15997771866/Executioners-Blade"},
+        {name = "Cyrstal", url = "https://www.roblox.com/bundles/598/Elemental-Crystal-Golem"}
+    }},
+    {category = "KINETIC GUN ITEMS", items = {
+        {name = "Gun", url = "https://www.roblox.com/catalog/17163596085/Sky-Blue-Cybernetic-Rifle"},
+        {name = "Bullet", url = "https://www.roblox.com/catalog/4504231783/Elemental-Crystal-Golem-Shoulder-Rock"}
+    }},
+    {category = "BASEBALL BAT ITEMS", items = {
+        {name = "Baseball Bat", url = "https://www.roblox.com/catalog/12433640377/Baseball-Bat"}
+    }},
+    {category = "KJ ITEMS", items = {
+        {name = "KJ Head", url = "https://www.roblox.com/catalog/17309357457/KJs-Head"}
+    }},
+    {category = "DUBSTEP ITEMS", items = {
+        {name = "DubStep Gun Bass Cannon", url = "https://www.roblox.com/catalog/137063455124987/Dubstep-Gun-Bass-cannon"},
+        {name = "RailGun", url = "https://www.roblox.com/catalog/4623059912/Starslayer-Railgun"},
+        {name = "Green RailGun", url = "https://www.roblox.com/catalog/16027125555/Sci-fi-Pulse-Railgun-Green"},
+        {name = "Red RailGun", url = "https://www.roblox.com/catalog/15360496421/Sci-fi-Pulse-Railgun-Red-Gun"},
+        {name = "Blue RailGun", url = "https://www.roblox.com/catalog/15360499581/Sci-fi-Pulse-Railgun-Blue-Gun"},
+        {name = "Black Shark Gun", url = "https://www.roblox.com/catalog/14843532359/Water-Gun-Shark-Black"},
+        {name = "Olive Cannon", url = "https://www.roblox.com/catalog/16027138639/Sci-fi-T-22-Kicker-Cannon-Olive"},
+        {name = "Snow Hunter Gun", url = "https://www.roblox.com/catalog/6113437566/Mk-62V-Snow-Hunter"},
+        {name = "Desert Pulse Rifle", url = "https://www.roblox.com/catalog/4933301463/Desert-Type-37-Pulse-Rifle"},
+        {name = "Divine CannonBlade", url = "https://www.roblox.com/catalog/6411973956/Divine-Cannonblade"},
+        {name = "Demonic CannonBlade", url = "https://www.roblox.com/catalog/6411969239/Carmesim-Cannonblade"},
+        {name = "Bullet", url = "https://www.roblox.com/catalog/4504231783/Elemental-Crystal-Golem-Shoulder-Rock"},
+        {name = "Purple Aura", url = "https://www.roblox.com/catalog/16755111087/Purple-Anime-Aura"},
+        {name = "White Aura", url = "https://www.roblox.com/catalog/16755121565/White-Anime-Aura"},
+        {name = "Blue Aura", url = "https://www.roblox.com/catalog/16755106041/Blue-Anime-Aura"},
+        {name = "Red Aura", url = "https://www.roblox.com/catalog/16755118407/Red-Anime-Aura"},
+        {name = "Green Aura", url = "https://www.roblox.com/catalog/16755106840/Green-Anime-Aura"}
+    }},
+    {category = "TERRAPRISMA ITEMS", items = {
+        {name = "Yellow Gold Neon Sword", url = "https://www.roblox.com/catalog/75133535004735/Yellow-Gold-Neon-Sword-Back"},
+        {name = "Purple Neon Sword", url = "https://www.roblox.com/catalog/124711435393884/Purple-Neon-Sword-Back"},
+        {name = "Rainbow Neon Sword", url = "https://www.roblox.com/catalog/84513687194285/Rainbow-Neon-Sword-Back"}
+    }},
+    -- NEW ADDITION: FORSAKEN CHARACTERS ITEMS
+    {category = "FORSAKEN CHARACTERS", items = {
+        {name = "Guest 1337 hair (Forsaken)", url = "https://www.roblox.com/catalog/451221329/True-Blue-Hair"},
+        {name = "Guest 1337 Face (Forsaken)", url = "https://www.roblox.com/catalog/86428143832034/Guest-1337"},
+        {name = "Two Time Head (Forsaken)", url = "https://www.roblox.com/catalog/107288061390975/Two-Times-Face-Forsaken"},
+        {name = "Two Time Halo (Forsaken)", url = "https://www.roblox.com/catalog/84346928233610/Two-Time-Spawn-Halo-Second-Life-FORSAKEN"},
+        {name = "Two Time Hair (Forsaken)", url = "https://www.roblox.com/catalog/115418223085183/Two-Time-Black-Hair-Forsaken"},
+        {name = "Two Time Tail (Forsaken)", url = "https://www.roblox.com/catalog/112771394318199/FORSAKEN-Two-Time-Tail"},
+        {name = "Two Time Dagger (Forsaken)", url = "https://www.roblox.com/catalog/128948918758251/Two-Times-Dagger-Accurate-Forsaken"},
+        {name = "Taph Hoodie (Forsaken)", url = "https://www.roblox.com/catalog/107747446704196/Taph"},
+        {name = "1x1x1x1 Head (Forsaken)", url = "https://www.roblox.com/catalog/101713423267650/Manifested-Hatred-1x1x1x1-FACE"},
+        {name = "1x1x1x1 Torso (Forsaken)", url = "https://www.roblox.com/catalog/115389538792135/1x1x1x1-Torso"},
+        {name = "1x1x1x1 Crown (Forsaken)", url = "https://www.roblox.com/catalog/101434927270467/1X1X1X1-Crown"},
+        {name = "1x1x1x1 Sword (Forsaken)", url = "https://www.roblox.com/catalog/89549568817833/1x1x1x1-Sword-Forsaken"},
+        {name = "John Doe Arm (Forsaken)", url = "https://www.roblox.com/catalog/84526414637736/John-Doe-Corrupted-Arm-Forsaken"},
+        {name = "John Doe Claw (Forsaken)", url = "https://www.roblox.com/catalog/77880339772331/John-Doe-Corrupted-Claw-Forsaken"},
+        {name = "John Doe Face (Forsaken)", url = "https://www.roblox.com/catalog/101906857191395/John-Does-Face"},
+        {name = "Noli Head (Forsaken)", url = "https://www.roblox.com/catalog/125055495409583/Noli-Forsaken"}
+    }}
+}
+-- Function to create script buttons
+local function createScriptButton(scriptData, index)
+    local button = Instance.new("TextButton")
+    button.Name = scriptData.name
+    button.Size = UDim2.new(1, -24, 0, buttonHeight)
+    button.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    button.BackgroundTransparency = 0.6
+    button.BorderSizePixel = 0
+    button.Text = scriptData.name
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.TextSize = buttonTextSize
+    button.Font = Enum.Font.GothamSemibold
+    button.TextTransparency = 0.05
+    button.Parent = scrollFrame
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 14)
+    btnCorner.Parent = button
+    local btnBorder = Instance.new("UIStroke")
+    btnBorder.Color = Color3.fromRGB(255, 255, 255)
+    btnBorder.Thickness = 1
+    btnBorder.Transparency = 0.85
+    btnBorder.Parent = button
+    button.MouseButton1Click:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.15), {BackgroundTransparency = 0.4}):Play()
+        TweenService:Create(btnBorder, TweenInfo.new(0.15), {Transparency = 0.5}):Play()
+        wait(0.15)
+        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundTransparency = 0.6}):Play()
+        TweenService:Create(btnBorder, TweenInfo.new(0.2), {Transparency = 0.85}):Play()
+  
+        task.spawn(function()
+            local success, err = pcall(function()
+                if scriptData.config then
+                    _G.Config = scriptData.config
+                end
+                local scriptCode
+                if scriptData.url then
+                    scriptCode = game:HttpGet(scriptData.url)
+                elseif scriptData.code then
+                    scriptCode = scriptData.code
+                end
+                local scriptFunc = loadstring(scriptCode)
+                if scriptFunc then
+                    scriptFunc()
+                end
+            end)
+      
+            if not success then
+                warn("Failed to load " .. scriptData.name .. ": " .. tostring(err))
             end
-        end
+        end)
     end)
-    
+    button.MouseEnter:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundTransparency = 0.45, TextTransparency = 0}):Play()
+        TweenService:Create(btnBorder, TweenInfo.new(0.2), {Transparency = 0.6}):Play()
+    end)
+    button.MouseLeave:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundTransparency = 0.6, TextTransparency = 0.05}):Play()
+        TweenService:Create(btnBorder, TweenInfo.new(0.2), {Transparency = 0.85}):Play()
+    end)
+end
+-- Create all script buttons
+for i, scriptData in ipairs(scripts) do
+    createScriptButton(scriptData, i)
+end
+-- Update canvas size
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 24)
+listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 24)
+end)
+-- Blur effect for teleport confirmation
+local blurEffect = Instance.new("BlurEffect")
+blurEffect.Name = "TeleportBlur"
+blurEffect.Size = 0
+blurEffect.Parent = game:GetService("Lighting")
+-- Teleport Confirmation Frame
+local confirmFrame = Instance.new("Frame")
+confirmFrame.Name = "ConfirmFrame"
+confirmFrame.Size = isMobile and UDim2.new(0, 260, 0, 140) or UDim2.new(0, 300, 0, 160)
+confirmFrame.Position = UDim2.new(0.5, isMobile and -130 or -150, 0.5, isMobile and -70 or -80)
+confirmFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+confirmFrame.BackgroundTransparency = 0.3
+confirmFrame.BorderSizePixel = 0
+confirmFrame.Visible = false
+confirmFrame.ZIndex = 100
+confirmFrame.Parent = screenGui
+local confirmCorner = Instance.new("UICorner")
+confirmCorner.CornerRadius = UDim.new(0, 18)
+confirmCorner.Parent = confirmFrame
+local confirmBorder = Instance.new("UIStroke")
+confirmBorder.Color = Color3.fromRGB(255, 255, 255)
+confirmBorder.Thickness = 1
+confirmBorder.Transparency = 0.7
+confirmBorder.Parent = confirmFrame
+-- Warning text
+local warningLabel = Instance.new("TextLabel")
+warningLabel.Size = UDim2.new(1, -20, 0, isMobile and 80 or 90)
+warningLabel.Position = UDim2.new(0, 10, 0, isMobile and 15 or 20)
+warningLabel.BackgroundTransparency = 1
+warningLabel.Text = "Would You Like To Join\nGenesis Testing?"
+warningLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+warningLabel.TextSize = isMobile and 14 or 16
+warningLabel.Font = Enum.Font.GothamBold
+warningLabel.TextWrapped = true
+warningLabel.ZIndex = 101
+warningLabel.Parent = confirmFrame
+-- Yes button
+local yesButton = Instance.new("TextButton")
+yesButton.Name = "YesButton"
+yesButton.Size = isMobile and UDim2.new(0, 100, 0, 32) or UDim2.new(0, 120, 0, 36)
+yesButton.Position = isMobile and UDim2.new(0, 20, 1, -42) or UDim2.new(0, 20, 1, -46)
+yesButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+yesButton.BackgroundTransparency = 0.5
+yesButton.BorderSizePixel = 0
+yesButton.Text = "YES"
+yesButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+yesButton.TextSize = isMobile and 12 or 14
+yesButton.Font = Enum.Font.GothamBold
+yesButton.ZIndex = 101
+yesButton.Parent = confirmFrame
+local yesCorner = Instance.new("UICorner")
+yesCorner.CornerRadius = UDim.new(0, 12)
+yesCorner.Parent = yesButton
+local yesBorder = Instance.new("UIStroke")
+yesBorder.Color = Color3.fromRGB(255, 255, 255)
+yesBorder.Thickness = 1
+yesBorder.Transparency = 0.8
+yesBorder.Parent = yesButton
+-- No button
+local noButton = Instance.new("TextButton")
+noButton.Name = "NoButton"
+noButton.Size = isMobile and UDim2.new(0, 100, 0, 32) or UDim2.new(0, 120, 0, 36)
+noButton.Position = isMobile and UDim2.new(1, -120, 1, -42) or UDim2.new(1, -140, 1, -46)
+noButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+noButton.BackgroundTransparency = 0.5
+noButton.BorderSizePixel = 0
+noButton.Text = "NO"
+noButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+noButton.TextSize = isMobile and 12 or 14
+noButton.Font = Enum.Font.GothamBold
+noButton.ZIndex = 101
+noButton.Parent = confirmFrame
+local noCorner = Instance.new("UICorner")
+noCorner.CornerRadius = UDim.new(0, 12)
+noCorner.Parent = noButton
+local noBorder = Instance.new("UIStroke")
+noBorder.Color = Color3.fromRGB(255, 255, 255)
+noBorder.Thickness = 1
+noBorder.Transparency = 0.8
+noBorder.Parent = noButton
+-- Teleport toggle functionality
+teleportToggle.MouseButton1Click:Connect(function()
+    confirmFrame.Visible = true
+    confirmFrame.BackgroundTransparency = 1
+    warningLabel.TextTransparency = 1
+    yesButton.BackgroundTransparency = 1
+    yesButton.TextTransparency = 1
+    noButton.BackgroundTransparency = 1
+    noButton.TextTransparency = 1
+    -- Blur screen
+    TweenService:Create(blurEffect, TweenInfo.new(0.3), {Size = 20}):Play()
+    -- Fade in dialog
+    TweenService:Create(confirmFrame, TweenInfo.new(0.3), {BackgroundTransparency = 0.3}):Play()
+    TweenService:Create(warningLabel, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
+    TweenService:Create(yesButton, TweenInfo.new(0.3), {BackgroundTransparency = 0.5, TextTransparency = 0}):Play()
+    TweenService:Create(noButton, TweenInfo.new(0.3), {BackgroundTransparency = 0.5, TextTransparency = 0}):Play()
+end)
+-- Yes button - teleport to game
+yesButton.MouseButton1Click:Connect(function()
+    TweenService:Create(yesButton, TweenInfo.new(0.1), {BackgroundTransparency = 0.3}):Play()
+    wait(0.1)
+    local placeId = 78220771968979
+    local success, err = pcall(function()
+        TeleportService:Teleport(placeId, player)
+    end)
     if not success then
-        warn("Reanimation Error [" .. scriptData.name .. "]: " .. errorMsg)
+        warn("Teleport failed: " .. tostring(err))
+    end
+end)
+-- No button - close dialog
+noButton.MouseButton1Click:Connect(function()
+    TweenService:Create(noButton, TweenInfo.new(0.1), {BackgroundTransparency = 0.3}):Play()
+    wait(0.1)
+    -- Fade out dialog
+    TweenService:Create(confirmFrame, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(warningLabel, TweenInfo.new(0.2), {TextTransparency = 1}):Play()
+    TweenService:Create(yesButton, TweenInfo.new(0.2), {BackgroundTransparency = 1, TextTransparency = 1}):Play()
+    TweenService:Create(noButton, TweenInfo.new(0.2), {BackgroundTransparency = 1, TextTransparency = 1}):Play()
+    -- Remove blur
+    TweenService:Create(blurEffect, TweenInfo.new(0.2), {Size = 0}):Play()
+    wait(0.2)
+    confirmFrame.Visible = false
+end)
+-- Confirmation button hover effects
+yesButton.MouseEnter:Connect(function()
+    TweenService:Create(yesButton, TweenInfo.new(0.2), {BackgroundTransparency = 0.35}):Play()
+    TweenService:Create(yesBorder, TweenInfo.new(0.2), {Transparency = 0.5}):Play()
+end)
+yesButton.MouseLeave:Connect(function()
+    TweenService:Create(yesButton, TweenInfo.new(0.2), {BackgroundTransparency = 0.5}):Play()
+    TweenService:Create(yesBorder, TweenInfo.new(0.2), {Transparency = 0.8}):Play()
+end)
+noButton.MouseEnter:Connect(function()
+    TweenService:Create(noButton, TweenInfo.new(0.2), {BackgroundTransparency = 0.35}):Play()
+    TweenService:Create(noBorder, TweenInfo.new(0.2), {Transparency = 0.5}):Play()
+end)
+noButton.MouseLeave:Connect(function()
+    TweenService:Create(noButton, TweenInfo.new(0.2), {BackgroundTransparency = 0.5}):Play()
+    TweenService:Create(noBorder, TweenInfo.new(0.2), {Transparency = 0.8}):Play()
+end)
+teleportToggle.MouseEnter:Connect(function()
+    TweenService:Create(teleportToggle, TweenInfo.new(0.2), {BackgroundTransparency = 0.4}):Play()
+    TweenService:Create(teleportBorder, TweenInfo.new(0.2), {Transparency = 0.5}):Play()
+end)
+teleportToggle.MouseLeave:Connect(function()
+    TweenService:Create(teleportToggle, TweenInfo.new(0.2), {BackgroundTransparency = 0.6}):Play()
+    TweenService:Create(teleportBorder, TweenInfo.new(0.2), {Transparency = 0.8}):Play()
+end)
+-- Universal Rigs Frame
+local rigsFrame = Instance.new("Frame")
+rigsFrame.Name = "RigsFrame"
+rigsFrame.Size = isMobile and UDim2.new(0, 240, 0, 320) or UDim2.new(0, 280, 0, 360)
+rigsFrame.Position = isMobile and UDim2.new(0.5, -120, 0.5, -160) or UDim2.new(0.5, -140, 0.5, -180)
+rigsFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+rigsFrame.BackgroundTransparency = 0.3
+rigsFrame.BorderSizePixel = 0
+rigsFrame.Visible = false
+rigsFrame.Parent = screenGui
+local rigsFrameCorner = Instance.new("UICorner")
+rigsFrameCorner.CornerRadius = UDim.new(0, 18)
+rigsFrameCorner.Parent = rigsFrame
+local rigsFrameBorder = Instance.new("UIStroke")
+rigsFrameBorder.Color = Color3.fromRGB(255, 255, 255)
+rigsFrameBorder.Thickness = 1
+rigsFrameBorder.Transparency = 0.8
+rigsFrameBorder.Parent = rigsFrame
+-- Rigs Title
+local rigsTitle = Instance.new("TextLabel")
+rigsTitle.Size = UDim2.new(1, 0, 0, isMobile and 30 or 35)
+rigsTitle.BackgroundTransparency = 1
+rigsTitle.Text = "Universal Rigs"
+rigsTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+rigsTitle.TextSize = isMobile and 13 or 15
+rigsTitle.Font = Enum.Font.GothamBold
+rigsTitle.TextTransparency = 0
+rigsTitle.Parent = rigsFrame
+-- Close button for rigs
+local rigsClose = Instance.new("TextButton")
+rigsClose.Size = isMobile and UDim2.new(0, 20, 0, 20) or UDim2.new(0, 24, 0, 24)
+rigsClose.Position = isMobile and UDim2.new(1, -25, 0, 5) or UDim2.new(1, -29, 0, 5)
+rigsClose.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+rigsClose.BackgroundTransparency = 0.6
+rigsClose.Text = "X"
+rigsClose.TextColor3 = Color3.fromRGB(255, 255, 255)
+rigsClose.TextSize = isMobile and 10 or 12
+rigsClose.Font = Enum.Font.GothamBold
+rigsClose.BorderSizePixel = 0
+rigsClose.Parent = rigsFrame
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 10)
+closeCorner.Parent = rigsClose
+-- Rigs ScrollFrame
+local rigsScroll = Instance.new("ScrollingFrame")
+rigsScroll.Size = isMobile and UDim2.new(1, -20, 1, -40) or UDim2.new(1, -20, 1, -45)
+rigsScroll.Position = isMobile and UDim2.new(0, 10, 0, 35) or UDim2.new(0, 10, 0, 40)
+rigsScroll.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+rigsScroll.BackgroundTransparency = 0.7
+rigsScroll.BorderSizePixel = 0
+rigsScroll.ScrollBarThickness = isMobile and 3 or 4
+rigsScroll.ScrollBarImageColor3 = Color3.fromRGB(255, 255, 255)
+rigsScroll.ScrollBarImageTransparency = 0.6
+rigsScroll.Parent = rigsFrame
+local rigsScrollCorner = Instance.new("UICorner")
+rigsScrollCorner.CornerRadius = UDim.new(0, 14)
+rigsScrollCorner.Parent = rigsScroll
+local rigsLayout = Instance.new("UIListLayout")
+rigsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+rigsLayout.Padding = UDim.new(0, 6)
+rigsLayout.Parent = rigsScroll
+local rigsPadding = Instance.new("UIPadding")
+rigsPadding.PaddingTop = UDim.new(0, 8)
+rigsPadding.PaddingBottom = UDim.new(0, 8)
+rigsPadding.PaddingLeft = UDim.new(0, 8)
+rigsPadding.PaddingRight = UDim.new(0, 8)
+rigsPadding.Parent = rigsScroll
+-- Rig items data
+local rigItems = {
+    {category = "BLACK RIG", items = {
+        {name = "Black Classic Head", id = "14160473681"},
+        {name = "Torso Extension", id = "138364679836274"},
+        {name = "Black Left Arm", id = "85392395166623"},
+        {name = "Black Right Arm", id = "131385506535381"},
+        {name = "Black Left Leg", id = "106249329428811"},
+        {name = "Black Right Leg", id = "129462518582032"}
+    }},
+    {category = "WHITE RIG", items = {
+        {name = "Classic White Head", id = "14157139555"},
+        {name = "White Torso", id = "128948172708607"},
+        {name = "White Left Arm", id = "102599402682100"},
+        {name = "White Right Arm", id = "82942681251131"},
+        {name = "White Left Leg", id = "140395948277978"},
+        {name = "White Right Leg", id = "90960046381276"}
+    }},
+    {category = "NOOB RIG", items = {
+        {name = "Noob Head", id = "14157137406"},
+        {name = "Noob Torso", id = "95290698984301"},
+        {name = "Left Noob Arm", id = "84451219120140"},
+        {name = "Right Noob Arm", id = "72292903231768"},
+        {name = "Noob Left Leg", id = "108186273151388"},
+        {name = "Noob Right Leg", id = "139904067056008"}
+    }},
+    {category = "Custom", items = {
+        {name = "Invincible mask", id = "101507749243611"},
+        {name = "Invincible torso", id = "116707249650211"},
+        {name = "Invincible Left arm", id = "99893731148236"},
+        {name = "Invincible Right arm", id = "119575873003023"},
+        {name = "Invincible Left Leg", id = "114704999377829"},
+        {name = "Invincible Right Leg", id = "98560682951476"},
+        {name = "Gojo Head", id = "125279152738243"},
+        {name = "Gojo Shirt", id = "81020082282980"},
+        {name = "Gojo Left arm", id = "121926720373973"},
+        {name = "Gojo Right arm", id = "86308251937339"},
+        {name = "Gojo Left leg", id = "84830111227206"},
+        {name = "Gojo Right leg", id = "114368458356247"},
+        {name = "Pumpkin Head (Showman Minecraft)", id = "111355768914934"},
+        {name = "Pumpkin Head (White Jason)", id = "129970275766230"}
+    }}
+}
+-- Track clicked items
+local clickedItems = {}
+-- Create rig items
+for _, rigData in ipairs(rigItems) do
+    local categoryLabel = Instance.new("TextLabel")
+    categoryLabel.Size = UDim2.new(1, -16, 0, isMobile and 22 or 25)
+    categoryLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    categoryLabel.BackgroundTransparency = 0.95
+    categoryLabel.Text = rigData.category
+    categoryLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    categoryLabel.TextSize = isMobile and 10 or 12
+    categoryLabel.Font = Enum.Font.GothamBold
+    categoryLabel.BorderSizePixel = 0
+    categoryLabel.Parent = rigsScroll
+    local catCorner = Instance.new("UICorner")
+    catCorner.CornerRadius = UDim.new(0, 8)
+    catCorner.Parent = categoryLabel
+    for _, item in ipairs(rigData.items) do
+        -- Container frame for image and text
+        local itemFrame = Instance.new("Frame")
+        itemFrame.Size = UDim2.new(1, -16, 0, isMobile and 42 or 50)
+        itemFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        itemFrame.BackgroundTransparency = 0.6
+        itemFrame.BorderSizePixel = 0
+        itemFrame.Parent = rigsScroll
+   
+        local itemCorner = Instance.new("UICorner")
+        itemCorner.CornerRadius = UDim.new(0, 10)
+        itemCorner.Parent = itemFrame
+   
+        local itemBorder = Instance.new("UIStroke")
+        itemBorder.Color = Color3.fromRGB(255, 255, 255)
+        itemBorder.Thickness = 1
+        itemBorder.Transparency = 0.9
+        itemBorder.Parent = itemFrame
+   
+        -- Image for the hat (LEFT SIDE)
+        local itemImage = Instance.new("ImageLabel")
+        itemImage.Size = isMobile and UDim2.new(0, 34, 0, 34) or UDim2.new(0, 42, 0, 42)
+        itemImage.Position = UDim2.new(0, 4, 0.5, isMobile and -17 or -21)
+        itemImage.BackgroundTransparency = 1
+        itemImage.Image = "rbxthumb://type=Asset&id=" .. item.id .. "&w=150&h=150"
+        itemImage.ScaleType = Enum.ScaleType.Fit
+        itemImage.Parent = itemFrame
+   
+        -- Decal preview (RIGHT SIDE)
+        local decalPreview = Instance.new("ImageLabel")
+        decalPreview.Size = isMobile and UDim2.new(0, 34, 0, 34) or UDim2.new(0, 42, 0, 42)
+        decalPreview.Position = UDim2.new(1, isMobile and -38 or -46, 0.5, isMobile and -17 or -21)
+        decalPreview.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+        decalPreview.BackgroundTransparency = 0.4
+        decalPreview.BorderSizePixel = 0
+        decalPreview.Image = "rbxthumb://type=Asset&id=" .. item.id .. "&w=150&h=150"
+        decalPreview.ScaleType = Enum.ScaleType.Fit
+        decalPreview.Parent = itemFrame
+   
+        local decalCorner = Instance.new("UICorner")
+        decalCorner.CornerRadius = UDim.new(0, 8)
+        decalCorner.Parent = decalPreview
+   
+        local decalBorder = Instance.new("UIStroke")
+        decalBorder.Color = Color3.fromRGB(255, 255, 255)
+        decalBorder.Thickness = 0.5
+        decalBorder.Transparency = 0.95
+        decalBorder.Parent = decalPreview
+   
+        -- Text label for name (ADJUSTED WIDTH TO FIT BOTH IMAGES)
+        local itemLabel = Instance.new("TextLabel")
+        itemLabel.Size = UDim2.new(1, isMobile and -85 or -98, 1, 0)
+        itemLabel.Position = isMobile and UDim2.new(0, 42, 0, 0) or UDim2.new(0, 50, 0, 0)
+        itemLabel.BackgroundTransparency = 1
+        itemLabel.Text = item.name
+        itemLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        itemLabel.TextSize = isMobile and 8 or 10
+        itemLabel.Font = Enum.Font.GothamSemibold
+        itemLabel.TextXAlignment = Enum.TextXAlignment.Left
+        itemLabel.TextWrapped = true
+        itemLabel.Parent = itemFrame
+   
+        -- Invisible button overlay
+        local itemButton = Instance.new("TextButton")
+        itemButton.Size = UDim2.new(1, 0, 1, 0)
+        itemButton.BackgroundTransparency = 1
+        itemButton.Text = ""
+        itemButton.Parent = itemFrame
+   
+        -- Click functionality
+        itemButton.MouseButton1Click:Connect(function()
+            -- Visual feedback
+            TweenService:Create(itemFrame, TweenInfo.new(0.1), {BackgroundTransparency = 0.4}):Play()
+       
+            -- Mark as clicked and animate white fade in/out
+            if not clickedItems[item.id] then
+                clickedItems[item.id] = true
+           
+                -- Fade to white
+                TweenService:Create(itemFrame, TweenInfo.new(0.3), {
+                    BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                    BackgroundTransparency = 0.4
+                }):Play()
+                TweenService:Create(itemLabel, TweenInfo.new(0.3), {
+                    TextColor3 = Color3.fromRGB(0, 0, 0)
+                }):Play()
+           
+                wait(0.5)
+           
+                -- Fade back to original
+                TweenService:Create(itemFrame, TweenInfo.new(0.4), {
+                    BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+                    BackgroundTransparency = 0.6
+                }):Play()
+                TweenService:Create(itemLabel, TweenInfo.new(0.4), {
+                    TextColor3 = Color3.fromRGB(255, 255, 255)
+                }):Play()
+            else
+                -- If already clicked, do a quick flash
+                TweenService:Create(itemFrame, TweenInfo.new(0.15), {
+                    BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                    BackgroundTransparency = 0.3
+                }):Play()
+                TweenService:Create(itemLabel, TweenInfo.new(0.15), {
+                    TextColor3 = Color3.fromRGB(0, 0, 0)
+                }):Play()
+           
+                wait(0.3)
+           
+                TweenService:Create(itemFrame, TweenInfo.new(0.3), {
+                    BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+                    BackgroundTransparency = 0.6
+                }):Play()
+                TweenService:Create(itemLabel, TweenInfo.new(0.3), {
+                    TextColor3 = Color3.fromRGB(255, 255, 255)
+                }):Play()
+            end
+       
+            wait(0.1)
+            TweenService:Create(itemFrame, TweenInfo.new(0.1), {BackgroundTransparency = 0.6}):Play()
+       
+            -- Copy full ID to clipboard
+            local fullId = "https://www.roblox.com/catalog/" .. item.id
+            setclipboard(fullId)
+       
+            -- Show copied notification
+            local originalText = itemLabel.Text
+            itemLabel.Text = item.name .. " (Copied!)"
+            wait(1.5)
+            itemLabel.Text = originalText
+        end)
+   
+        itemButton.MouseEnter:Connect(function()
+            TweenService:Create(itemFrame, TweenInfo.new(0.2), {BackgroundTransparency = 0.45}):Play()
+            TweenService:Create(itemBorder, TweenInfo.new(0.2), {Transparency = 0.6}):Play()
+        end)
+   
+        itemButton.MouseLeave:Connect(function()
+            TweenService:Create(itemFrame, TweenInfo.new(0.2), {BackgroundTransparency = 0.6}):Play()
+            TweenService:Create(itemBorder, TweenInfo.new(0.2), {Transparency = 0.9}):Play()
+        end)
     end
 end
-
--- Create sidebar toggles (REANIMATE ADDED FIRST)
-local ReanimateToggle, ReanimateLabel = CreateToggle("Reanimate", Sidebar)
-ReanimateToggle.Position = UDim2.new(0, 5, 0, 10)
-
-local RIGSToggle, RIGSLabel = CreateToggle("RIGS", Sidebar)
-RIGSToggle.Position = UDim2.new(0, 5, 0, 65)
-
-local ItemIDSToggle, ItemIDSLabel = CreateToggle("Item IDS", Sidebar)
-ItemIDSToggle.Position = UDim2.new(0, 5, 0, 120)
-
-local CreditsToggle, CreditsLabel = CreateToggle("Credits", Sidebar)
-CreditsToggle.Position = UDim2.new(0, 5, 0, 175)
-
--- Reanimate toggle (main menu)
-ReanimateToggle.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        FadeOutAll(function()
-            -- Set Reanimate as active toggle
-            SetToggleActive(ReanimateToggle, ReanimateLabel)
-            
-            HideAllSidebarLines()
-            ShowLineForToggle(ReanimateToggle)
-            ClearScroller()
-            
-            -- Add all 38 reanimate toggles
-            for i, scriptData in ipairs(reanimationScripts) do
-                local toggle, label = CreateToggle(scriptData.name, Scroller)
-                toggle.Position = UDim2.new(0, 10, 0, 10 + ((i-1) * 55))
-                toggle.Size = UDim2.new(1, -20, 0, 45)
-                
-                -- Make these toggles clickable with white/black inversion
-                toggle.InputBegan:Connect(function(clickInput)
-                    if clickInput.UserInputType == Enum.UserInputType.MouseButton1 then
-                        -- Play toggle sound
-                        playToggleSound()
-                        
-                        -- Animate click
-                        local originalBg = toggle.BackgroundColor3
-                        local originalText = label.TextColor3
-                        
-                        local fadeToWhite = TweenService:Create(toggle, TweenInfo.new(0.3), {BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0})
-                        fadeToWhite:Play()
-                        
-                        local textToBlack = TweenService:Create(label, TweenInfo.new(0.3), {TextColor3 = Color3.new(0, 0, 0)})
-                        textToBlack:Play()
-                        
-                        -- Execute the reanimation script (silently)
-                        ExecuteReanimation(scriptData)
-                        
-                        wait(0.3)
-                        
-                        local fadeBack = TweenService:Create(toggle, TweenInfo.new(0.3), {BackgroundColor3 = originalBg, BackgroundTransparency = 0.2})
-                        fadeBack:Play()
-                        
-                        local textBack = TweenService:Create(label, TweenInfo.new(0.3), {TextColor3 = originalText})
-                        textBack:Play()
-                    end
-                end)
+rigsScroll.CanvasSize = UDim2.new(0, 0, 0, rigsLayout.AbsoluteContentSize.Y + 16)
+rigsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    rigsScroll.CanvasSize = UDim2.new(0, 0, 0, rigsLayout.AbsoluteContentSize.Y + 16)
+end)
+-- Rigs toggle functionality
+local rigsOpen = false
+rigsToggle.MouseButton1Click:Connect(function()
+    rigsOpen = not rigsOpen
+    rigsFrame.Visible = rigsOpen
+    if rigsOpen then
+        rigsFrame.BackgroundTransparency = 1
+        rigsTitle.TextTransparency = 1
+        rigsScroll.BackgroundTransparency = 1
+        rigsClose.BackgroundTransparency = 1
+   
+        TweenService:Create(rigsFrame, TweenInfo.new(0.3), {BackgroundTransparency = 0.3}):Play()
+        TweenService:Create(rigsTitle, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
+        TweenService:Create(rigsScroll, TweenInfo.new(0.3), {BackgroundTransparency = 0.7}):Play()
+        TweenService:Create(rigsClose, TweenInfo.new(0.3), {BackgroundTransparency = 0.6}):Play()
+   
+        -- Rotate button when opening
+        TweenService:Create(rigsToggle, TweenInfo.new(0.3), {
+            Rotation = 90,
+            BackgroundTransparency = 0.4
+        }):Play()
+    else
+        TweenService:Create(rigsFrame, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+        TweenService:Create(rigsTitle, TweenInfo.new(0.2), {TextTransparency = 1}):Play()
+        TweenService:Create(rigsScroll, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+        TweenService:Create(rigsClose, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+   
+        -- Rotate button back when closing
+        TweenService:Create(rigsToggle, TweenInfo.new(0.3), {
+            Rotation = 0,
+            BackgroundTransparency = 0.6
+        }):Play()
+   
+        wait(0.2)
+        rigsFrame.Visible = false
+    end
+end)
+rigsClose.MouseButton1Click:Connect(function()
+    rigsOpen = false
+    TweenService:Create(rigsFrame, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(rigsTitle, TweenInfo.new(0.2), {TextTransparency = 1}):Play()
+    TweenService:Create(rigsScroll, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(rigsClose, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+    -- Rotate button back when closing via X button
+    TweenService:Create(rigsToggle, TweenInfo.new(0.3), {
+        Rotation = 0,
+        BackgroundTransparency = 0.6
+    }):Play()
+    wait(0.2)
+    rigsFrame.Visible = false
+end)
+rigsToggle.MouseEnter:Connect(function()
+    TweenService:Create(rigsToggle, TweenInfo.new(0.2), {BackgroundTransparency = 0.4}):Play()
+    TweenService:Create(rigsBorder, TweenInfo.new(0.2), {Transparency = 0.5}):Play()
+end)
+rigsToggle.MouseLeave:Connect(function()
+    if rigsOpen then
+        TweenService:Create(rigsToggle, TweenInfo.new(0.2), {BackgroundTransparency = 0.4}):Play()
+    else
+        TweenService:Create(rigsToggle, TweenInfo.new(0.2), {BackgroundTransparency = 0.6}):Play()
+    end
+    TweenService:Create(rigsBorder, TweenInfo.new(0.2), {Transparency = 0.8}):Play()
+end)
+rigsClose.MouseEnter:Connect(function()
+    TweenService:Create(rigsClose, TweenInfo.new(0.2), {BackgroundTransparency = 0.4}):Play()
+end)
+rigsClose.MouseLeave:Connect(function()
+    TweenService:Create(rigsClose, TweenInfo.new(0.2), {BackgroundTransparency = 0.6}):Play()
+end)
+-- Dragging functionality for rigs frame
+local draggingRigs = false
+local dragInputRigs, mousePosRigs, framePosRigs
+local dragTweenRigs
+local function updateRigs(input)
+    if dragTweenRigs then
+        dragTweenRigs:Cancel()
+    end
+    local delta = input.Position - mousePosRigs
+    local targetPos = UDim2.new(
+        framePosRigs.X.Scale,
+        framePosRigs.X.Offset + delta.X,
+        framePosRigs.Y.Scale,
+        framePosRigs.Y.Offset + delta.Y
+    )
+    dragTweenRigs = TweenService:Create(rigsFrame, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Position = targetPos
+    })
+    dragTweenRigs:Play()
+end
+rigsFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        draggingRigs = true
+        mousePosRigs = input.Position
+        framePosRigs = rigsFrame.Position
+  
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                draggingRigs = false
             end
-            
-            -- Set scroller canvas size based on number of items
-            Scroller.CanvasSize = UDim2.new(0, 0, 0, #reanimationScripts * 55 + 20)
-            
-            FadeInAll()
         end)
     end
 end)
-
--- RIGS toggle
-RIGSToggle.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		FadeOutAll(function()
-			-- Set RIGS as active toggle
-			SetToggleActive(RIGSToggle, RIGSLabel)
-			
-			HideAllSidebarLines()
-			ShowLineForToggle(RIGSToggle)
-			ClearScroller()
-			
-			-- RIG items with their IDs for detection
-			local rigItems = {
-				{name = "RIG (HATS) 1", id = "14160471787"},
-				{name = "RIG (HATS) 2", id = "138364679836274"},
-				{name = "RIG (HATS) 3", id = "85392395166623"},
-				{name = "RIG (HATS) 4", id = "131385506535381"},
-				{name = "RIG (HATS) 5", id = "106249329428811"},
-				{name = "RIG (HATS) 6", id = "129462518582032"},
-				{name = "RIG (HATS) 7", id = "14160473681"},
-				{name = "RIG (HATS) 8", id = "128948172708607"},
-				{name = "RIG (HATS) 9", id = "102599402682100"},
-				{name = "RIG (HATS) 10", id = "82942681251131"},
-				{name = "RIG (HATS) 11", id = "140395948277978"},
-				{name = "RIG (HATS) 12", id = "90960046381276"}
-			}
-			
-			-- Add RIG (HATS) items
-			for i, rigData in ipairs(rigItems) do
-				local container = CreateItemButton(rigData.name, Scroller, 10 + ((i-1) * 55), rigData.id)
-			end
-			
-			-- Set scroller canvas size based on number of items
-			Scroller.CanvasSize = UDim2.new(0, 0, 0, 12 * 55 + 20)
-			
-			FadeInAll()
-		end)
-	end
+rigsFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInputRigs = input
+    end
 end)
-
--- Item IDS toggle
-ItemIDSToggle.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		FadeOutAll(function()
-			-- Set Item IDS as active toggle
-			SetToggleActive(ItemIDSToggle, ItemIDSLabel)
-			
-			HideAllSidebarLines()
-			ShowLineForToggle(ItemIDSToggle)
-			ClearScroller()
-			
-			-- Complete item database with categories
-			local itemDatabase = {
-				{category = "C00LKIDD ITEMS", items = {
-					{name = "White Block for throwing block", id = "12383790958"},
-					{name = "Glitched dummy for ability", id = "98099894849025"},
-				}},
-				{category = "NOLI ITEMS", items = {
-					{name = "Noli star for nova", id = "74013526892143"},
-					{name = "Glitched dummy for ability", id = "98099894849025"},
-					{name = "Noli crown", id = "126461620175785"},
-				}},
-				{category = "BLACK LIGHTNING CANNON", items = {
-					{name = "Black cannon part P1", id = "117311153426168"},
-					{name = "Black cannon part P2", id = "116940095199813"},
-					{name = "Black cannon Black head", id = "135845211993815"},
-					{name = "HEAD", id = "14160471787"},
-					{name = "TORSO", id = "138364679836274"},
-					{name = "LEFT ARM", id = "85392395166623"},
-					{name = "RIGHT ARM", id = "131385506535381"},
-					{name = "LEFT LEG", id = "106249329428811"},
-					{name = "RIGHT LEG", id = "129462518582032"},
-					{name = "Bullet", id = "4504231783"}
-				}},
-				{category = "WHITE LIGHTNING CANNON", items = {
-					{name = "White cannon P1", id = "136055191177936"},
-					{name = "White cannon P2", id = "126145101810389"},
-					{name = "White cannon head", id = "111672581230926"},
-					{name = "HEAD", id = "14160473681"},
-					{name = "TORSO", id = "128948172708607"},
-					{name = "LEFT ARM", id = "102599402682100"},
-					{name = "RIGHT ARM", id = "82942681251131"},
-					{name = "LEFT LEG", id = "140395948277978"},
-					{name = "RIGHT LEG", id = "90960046381276"},
-					{name = "Bullet", id = "4504231783"}
-				}},
-				{category = "Neptunian V", items = {
-					{name = "Void Large Sword", id = "5268602207"},
-					{name = "Demon God Sword", id = "5316479641"},
-					{name = "Rainbow God Sword", id = "5316539421"},
-					{name = "Holloween Sword", id = "5699795428"},
-					{name = "Aurora Sword", id = "5316549755"},
-					{name = "Corrupt Lord Sword", id = "5268710380"},
-					{name = "Toxic Lord Sword", id = "5268720002"},
-					{name = "Golden Demonic GreatSword", id = "4794315940"},
-					{name = "Demonic Greatsword", id = "4315489767"},
-					{name = "Corrupt Demonic Greatsword", id = "4506945409"},
-					{name = "Frozen Demonic Greatsword", id = "4458601937"}
-				}},
-				{category = "AK-47", items = {
-					{name = "Eminence White Purple", id = "14847744375"},
-					{name = "Bullet", id = "4504231783"}
-				}},
-				{category = "Normal BanHammer", items = {
-					{name = "Normal BanHammer", id = "15427288323"},
-					{name = "Rainbow BanHammer", id = "15548353353"},
-					{name = "Blue BanHammer", id = "15548329516"},
-					{name = "Black BanHammer", id = "15548314241"},
-					{name = "Red BanHammer", id = "15548317357"},
-					{name = "Pink BanHammer", id = "15548348256"},
-					{name = "White BanHammer", id = "15548324701"},
-					{name = "Golden BanHammer", id = "15582048618"},
-					{name = "Epic Face BanHammer", id = "15548350762"},
-					{name = "Illumina BanHammer", id = "15548332386"}
-				}},
-				{category = "Classic Linked", items = {
-					{name = "Linked Sword", id = "14775039887"},
-					{name = "Baller Head", id = "11480029711"},
-					{name = "Rocket Launcher", id = "12402087358"},
-					{name = "Bomb Hat", id = "15925628459"}
-				}},
-				{category = "MiniGun", items = {
-					{name = "Type-9000-MiniGun", id = "6775268462"},
-					{name = "Double MiniGun", id = "15360521799"},
-					{name = "Green MiniGun", id = "17598434795"},
-					{name = "Orange MiniGun", id = "17598212551"},
-					{name = "Pixel MiniGun (RED)", id = "17174236857"},
-					{name = "Normal Pixel MiniGun", id = "17382649150"},
-					{name = "Bullet", id = "4504231783"}
-				}},
-				{category = "Puppet Master", items = {
-					{name = "Noob Doll", id = "15222706412"},
-					{name = "Normal Doll", id = "10928635418"},
-					{name = "Neko Doll", id = "18133579816"},
-					{name = "Shy Purple Anime Doll", id = "15489065122"},
-					{name = "Hair w/ Hat", id = "17100974890"},
-					{name = "Creepy Glare Mask", id = "7394540066"},
-					{name = "Black Knife", id = "14132341804"},
-					{name = "Red Knife", id = "7170689370"},
-					{name = "Purple Knife", id = "7170800750"},
-					{name = "Yellow Knife", id = "7170685020"},
-					{name = "White Knife", id = "7170680556"},
-					{name = "Match Lighter", id = "15995270436"},
-					{name = "Black Vintage Lighter", id = "18592935983"},
-					{name = "Red Magic Ring", id = "13724337704"},
-					{name = "Poison Magic Ring", id = "13745947080"},
-					{name = "Shadow Magic Ring", id = "13491263026"},
-					{name = "Rainbow Magic Ring", id = "13492627277"},
-					{name = "Glass Magic Ring", id = "13803062999"},
-					{name = "Fire Magic Ring", id = "13489994318"}
-				}},
-				{category = "Good Cop Bad Cop", items = {
-					{name = "Blue Baton", id = "12978620178"},
-					{name = "Normal Baton", id = "12980424553"},
-					{name = "Red Baton", id = "12979137927"},
-					{name = "Orange Baton", id = "12980340684"},
-					{name = "Normal Baton 2", id = "8590591043"},
-					{name = "Emerald Gun", id = "14561260228"},
-					{name = "Blue Gun", id = "12830343073"},
-					{name = "Bullet", id = "4504231783"}
-				}},
-				{category = "Neko", items = {
-					{name = "Prop Knife Kawaii P1", id = "14132081157"},
-					{name = "Prop Knife Kawaii P2", id = "14132338037"},
-					{name = "Pink Prop Knife Two P1", id = "10928981782"},
-					{name = "Pink Prop Knife Two P2", id = "10928777338"},
-					{name = "Pink Prop Knife Three P1", id = "12713501445"},
-					{name = "Pink Prop Knife Three P2", id = "12713533733"},
-					{name = "White Ball P1 (Boob)", id = "5645497792"},
-					{name = "White Ball P2 (Boob)", id = "5645498661"},
-					{name = "Black Ball P1 (Boob)", id = "13760253770"},
-					{name = "Black Ball P2 (Boob)", id = "14852217948"}
-				}},
-				{category = "GONER", items = {
-					{name = "Goner Head", id = "17770317484"},
-					{name = "Goner Blade P1", id = "17771175724"},
-					{name = "Goner Blade P2", id = "17835236579"},
-					{name = "Goner Left Arm Spikes", id = "17822749561"},
-					{name = "Goner Right Arm Spikes", id = "17822722698"},
-					{name = "Goner Back Spikes", id = "17772174303"},
-					{name = "TORSO", id = "138364679836274"},
-					{name = "LEFT ARM", id = "85392395166623"},
-					{name = "RIGHT ARM", id = "131385506535381"},
-					{name = "LEFT LEG", id = "106249329428811"},
-					{name = "RIGHT LEG", id = "129462518582032"}
-				}},
-				{category = "Banisher", items = {
-					{name = "Heavy Pulse Rifle", id = "5164517317"},
-					{name = "Heavy Pulse Rifle 2.0", id = "5164509129"},
-					{name = "RailGun", id = "4623059912"},
-					{name = "Bullet", id = "4504231783"}
-				}},
-				{category = "Pistol", items = {
-					{name = "Green Revolver", id = "12830351516"},
-					{name = "Blue Revolver", id = "12830338562"},
-					{name = "Ancient Plasma Pistol", id = "11694545311"},
-					{name = "Bullet", id = "4504231783"}
-				}},
-				{category = "SIN DRAGON", items = {
-					{name = "Dragon Head P1", id = "111793953309477"},
-					{name = "Dragon Head P2", id = "113048125789248"},
-					{name = "Dragon Claw Black", id = "10238814782"},
-					{name = "Dragon Claw White", id = "10239245976"},
-					{name = "Aura Effect", id = "16755111087"},
-					{name = "Small Dragon Claw 1", id = "117186631495734"},
-					{name = "Small Dragon Claw 2", id = "132770514241770"},
-					{name = "Beam", id = "4504231783"}
-				}},
-				{category = "HACKLORD ITEMS", items = {
-					{name = "HackLord Sword on back", id = "106895658225908"},
-					{name = "HackLord Shirt one", id = "116480972579936"},
-					{name = "HackLord Casket", id = "135410154517249"},
-					{name = "HackLord Crown", id = "105433204930926"},
-					{name = "HackLord Face", id = "137808231808447"},
-					{name = "HackLord Left Arm", id = "110693960146571"},
-					{name = "HackLord Right Arm", id = "138934488961238"},
-					{name = "HackLord Torso", id = "84452359312672"},
-					{name = "Main HackLord sword", id = "112311161810826"},
-					{name = "HackLord Dummy", id = "123845356193764"},
-					{name = "HackLord Left Leg", id = "106249329428811"},
-					{name = "HackLord Right Leg", id = "129462518582032"},
-					{name = "The Erlking Greatsword V2", id = "18972529464"},
-					{name = "Void Titan Greatsword", id = "11460084205"},
-					{name = "Black Sword", id = "96606079405209"},
-					{name = "Big Greatsword", id = "131348586827675"},
-					{name = "Biggest Greatsword", id = "76313018969279"},
-					{name = "Void Evil Knight Greatsword", id = "11495244307"},
-					{name = "Purple GreatSword", id = "4506945409"},
-					{name = "Cyan GreatSword", id = "4458601937"},
-					{name = "DarkHeart Sword", id = "102043780869380"},
-					{name = "GhostWalker Sword", id = "91026685566277"},
-					{name = "Classic Sword", id = "78396622993231"},
-					{name = "Katana Sword", id = "16315380517"},
-					{name = "Golden Sword", id = "11330989470"},
-					{name = "God Sword", id = "18806029251"},
-					{name = "1x1x1x1x1 Sword", id = "118009299022227"},
-					{name = "HackLord Sword 2", id = "121290673270759"},
-					{name = "Halloween Black Moon Witch Backdrop", id = "80979029181126"},
-					{name = "Crescent sigilism moon", id = "87110799539894"},
-					{name = "Blue Ornate Moon Background", id = "10971858125"},
-					{name = "White Ornate Moon Background", id = "12332919426"},
-					{name = "Hotdog Suit", id = "5028584774"},
-					{name = "Banana Suit", id = "4962552589"},
-					{name = "Iron Coffin", id = "15230527145"},
-					{name = "Coffin", id = "135731544879121"},
-					{name = "Erlking Coffin", id = "118644874678351"},
-					{name = "Wild Hunt Heathcliffs Coffin", id = "18999927321"},
-					{name = "HackLord Head", id = "104601744330910"}
-				}},
-				{category = "STARGLITCHER 2.0 ITEMS", items = {
-					{name = "Star glitcher sword one", id = "5316479641"},
-					{name = "Star glitcher two", id = "5316539421"},
-					{name = "Star glitcher three", id = "5316549755"},
-					{name = "Star glitcher four", id = "5699795428"}
-				}},
-				{category = "PURSUER ITEMS", items = {
-					{name = "Pursuer Dummy glichted", id = "98099894849025"},
-					{name = "Pursuer head", id = "105174490519943"},
-					{name = "Pursuer sword one", id = "94622218233849"},
-					{name = "Pursuer sword two", id = "93396547702776"},
-					{name = "TORSO", id = "138364679836274"},
-					{name = "LEFT ARM", id = "85392395166623"},
-					{name = "RIGHT ARM", id = "131385506535381"},
-					{name = "LEFT LEG", id = "106249329428811"},
-					{name = "RIGHT LEG", id = "129462518582032"},
-					{name = "Minecraft Diamond Sword", id = "18566246244"},
-					{name = "White Pumpkin Diamond Axe", id = "140088091435468"},
-					{name = "Forsaken TOON sword", id = "96343269446448"},
-					{name = "Red Real Knife", id = "13791877812"},
-					{name = "Undyne Spear of Justice", id = "135594174508502"},
-					{name = "DarkHeart P1", id = "18877079510"},
-					{name = "DarkHeart P2", id = "14775020059"},
-					{name = "Kris Sword P1", id = "131895494199007"},
-					{name = "Kris Sword P2", id = "80425865712106"},
-					{name = "PvZ Zombie CutOut", id = "132111438882232"},
-					{name = "Birthday Pinata Buddy", id = "18100924519"},
-					{name = "Skeleton Bear White", id = "70399600466603"},
-					{name = "Undertale Papyrus Cutout", id = "115797927844321"},
-					{name = "Extra Shedletsky Dummy", id = "117662564986871"}
-				}},
-				{category = "JASON ITEMS", items = {
-					{name = "Two Time buddy", id = "138480343439270"},
-					{name = "Fire axe", id = "5555611932"},
-					{name = "Red Chainsaw Sword", id = "14952103037"},
-					{name = "Jason mask", id = "103821169902048"},
-					{name = "Penguin", id = "8275940644"},
-					{name = "Eraser Cat", id = "89788338095437"},
-					{name = "Jason Vorhees Machete", id = "106118632964784"},
-					{name = "DOOM Chainsaw", id = "89661258615392"},
-					{name = "DOOM Sword Crucible", id = "111163795354946"}
-				}},
-				{category = "ADMIN NOLI ITEMS", items = {
-					{name = "Btool Devesto", id = "89392828628286"}
-				}},
-				{category = "BLADE BALL ITEMS", items = {
-					{name = "Ball", id = "6685365462"},
-					{name = "Blade", id = "15997771866"},
-					{name = "Cyrstal", id = "598"}
-				}},
-				{category = "KINETIC GUN ITEMS", items = {
-					{name = "Gun", id = "17163596085"},
-					{name = "Bullet", id = "4504231783"}
-				}},
-				{category = "BASEBALL BAT ITEMS", items = {
-					{name = "Baseball Bat", id = "12433640377"}
-				}},
-				{category = "KJ ITEMS", items = {
-					{name = "KJ Head", id = "17309357457"}
-				}},
-				{category = "DUBSTEP ITEMS", items = {
-					{name = "DubStep Gun Bass Cannon", id = "137063455124987"},
-					{name = "RailGun", id = "4623059912"},
-					{name = "Green RailGun", id = "16027125555"},
-					{name = "Red RailGun", id = "15360496421"},
-					{name = "Blue RailGun", id = "15360499581"},
-					{name = "Black Shark Gun", id = "14843532359"},
-					{name = "Olive Cannon", id = "16027138639"},
-					{name = "Snow Hunter Gun", id = "6113437566"},
-					{name = "Desert Pulse Rifle", id = "4933301463"},
-					{name = "Divine CannonBlade", id = "6411973956"},
-					{name = "Demonic CannonBlade", id = "6411969239"},
-					{name = "Bullet", id = "4504231783"},
-					{name = "Purple Aura", id = "16755111087"},
-					{name = "White Aura", id = "16755121565"},
-					{name = "Blue Aura", id = "16755106041"},
-					{name = "Red Aura", id = "16755118407"},
-					{name = "Green Aura", id = "16755106840"}
-				}},
-				{category = "TERRAPRISMA ITEMS", items = {
-					{name = "Yellow Gold Neon Sword", id = "75133535004735"},
-					{name = "Purple Neon Sword", id = "124711435393884"},
-					{name = "Rainbow Neon Sword", id = "84513687194285"}
-				}},
-				{category = "FORSAKEN CHARACTERS", items = {
-					{name = "Guest 1337 hair", id = "451221329"},
-					{name = "Guest 1337 Face", id = "86428143832034"},
-					{name = "Two Time Head", id = "107288061390975"},
-					{name = "Two Time Halo", id = "84346928233610"},
-					{name = "Two Time Hair", id = "115418223085183"},
-					{name = "Two Time Tail", id = "112771394318199"},
-					{name = "Two Time Dagger", id = "128948918758251"},
-					{name = "Taph Hoodie", id = "107747446704196"},
-					{name = "1x1x1x1 Head", id = "101713423267650"},
-					{name = "1x1x1x1 Torso", id = "115389538792135"},
-					{name = "1x1x1x1 Crown", id = "101434927270467"},
-					{name = "1x1x1x1 Sword", id = "89549568817833"},
-					{name = "John Doe Arm", id = "84526414637736"},
-					{name = "John Doe Claw", id = "77880339772331"},
-					{name = "John Doe Face", id = "101906857191395"},
-					{name = "Noli Head", id = "125055495409583"}
-				}}
-			}
-			
-			-- Create buttons for all items
-			local yOffset = 10
-			for _, categoryData in ipairs(itemDatabase) do
-				-- Category header
-				local CategoryLabel = Instance.new("TextLabel")
-				CategoryLabel.Name = "CategoryLabel"
-				CategoryLabel.Size = UDim2.new(1, -20, 0, 30)
-				CategoryLabel.Position = UDim2.new(0, 10, 0, yOffset)
-				CategoryLabel.Text = categoryData.category
-				CategoryLabel.Font = Enum.Font.GothamBold
-				CategoryLabel.TextSize = 14
-				CategoryLabel.TextColor3 = Color3.new(1, 1, 1)
-				CategoryLabel.BackgroundTransparency = 1
-				CategoryLabel.TextXAlignment = Enum.TextXAlignment.Left
-				CategoryLabel.Parent = Scroller
-				
-				yOffset = yOffset + 35
-				
-				-- Create button for each item
-				for _, item in ipairs(categoryData.items) do
-					local container = CreateItemButton(item.name, Scroller, yOffset, item.id)
-					yOffset = yOffset + 55
-				end
-				
-				-- Add spacing after category
-				yOffset = yOffset + 10
-			end
-			
-			Scroller.CanvasSize = UDim2.new(0, 0, 0, yOffset)
-			FadeInAll()
-		end)
-	end
-end)
-
--- Credits toggle
-CreditsToggle.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		FadeOutAll(function()
-			-- Set Credits as active toggle
-			SetToggleActive(CreditsToggle, CreditsLabel)
-			
-			HideAllSidebarLines()
-			ShowLineForToggle(CreditsToggle)
-			ClearScroller()
-			
-			-- Add Credits content with the provided credits
-			local credits = {
-				{name = "GENESIS FE", decal = "83629928978659", youtube = "https://www.youtube.com/@GENESIS-FE"},
-				{name = "White Hat", decal = "89278194521463", youtube = "https://www.youtube.com/@White_hat.1"},
-				{name = "Melon Scripter", decal = "76587137674905", youtube = "https://www.youtube.com/@MelonScripter"},
-				{name = "Im_Patrick", decal = "122828131564451", youtube = "https://www.youtube.com/@Im_Patrick"}
-			}
-			
-			for i, credit in ipairs(credits) do
-				CreateCreditButton(credit.name, credit.decal, credit.youtube, Scroller, 10 + ((i-1) * 90))
-			end
-			
-			-- Add extra spacing and original credits
-			local OriginalCreditsLabel = Instance.new("TextLabel")
-			OriginalCreditsLabel.Name = "OriginalCreditsLabel"
-			OriginalCreditsLabel.Size = UDim2.new(1, -20, 0, 100)
-			OriginalCreditsLabel.Position = UDim2.new(0, 10, 0, 10 + (#credits * 90))
-			OriginalCreditsLabel.Text = "Reanimation GUI:\n\nMade By: Onyx (Syike)\n\nSpecial thanks to all contributors!\n\nVersion: 2.0"
-			OriginalCreditsLabel.Font = Enum.Font.Gotham
-			OriginalCreditsLabel.TextSize = 14
-			OriginalCreditsLabel.TextColor3 = Color3.new(1, 1, 1)
-			OriginalCreditsLabel.BackgroundTransparency = 1
-			OriginalCreditsLabel.TextYAlignment = Enum.TextYAlignment.Top
-			OriginalCreditsLabel.Parent = Scroller
-			
-			Scroller.CanvasSize = UDim2.new(0, 0, 0, (#credits * 90) + 120)
-			FadeInAll()
-		end)
-	end
-end)
-
--- Toggle button on left side of screen (SQUARE WITH SMOOTH DRAG - DECAL REMOVED)
-local ToggleButton = Instance.new("TextButton")
-ToggleButton.Name = "ToggleButton"
-ToggleButton.Size = isMobile and UDim2.new(0, 60, 0, 60) or UDim2.new(0, 40, 0, 40)
-ToggleButton.Position = UDim2.new(0, 10, 0.5, -20)
-ToggleButton.Text = ""
-ToggleButton.BackgroundColor3 = Color3.new(0, 0, 0)
-ToggleButton.BackgroundTransparency = 0.5
-ToggleButton.BorderSizePixel = 0
-ToggleButton.AutoButtonColor = false
-
-local ToggleCorner = Instance.new("UICorner")
-ToggleCorner.CornerRadius = UDim.new(0, 12)
-ToggleCorner.Parent = ToggleButton
-
--- THIN white outline for toggle button
-local ToggleStroke = Instance.new("UIStroke")
-ToggleStroke.Color = Color3.new(1, 1, 1)
-ToggleStroke.Thickness = 0.5
-ToggleStroke.Transparency = 1
-ToggleStroke.Parent = ToggleButton
-
--- Mini square inside toggle button - TRANSPARENT (ORIGINAL DESIGN)
-local MiniSquare = Instance.new("Frame")
-MiniSquare.Name = "MiniSquare"
-MiniSquare.Size = UDim2.new(0.6, 0, 0.6, 0)
-MiniSquare.Position = UDim2.new(0.2, 0, 0.2, 0)
-MiniSquare.BackgroundColor3 = Color3.new(1, 1, 1)
-MiniSquare.BackgroundTransparency = 1
-MiniSquare.BorderSizePixel = 0
-
-local MiniCorner = Instance.new("UICorner")
-MiniCorner.CornerRadius = UDim.new(0, 6)
-MiniCorner.Parent = MiniSquare
-
-MiniSquare.Parent = ToggleButton
-
--- Smooth drag functionality for toggle button
-local toggleDragging = false
-local toggleDragInput, toggleDragStart, toggleStartPos
-
-local function toggleUpdate(input)
-	local delta = input.Position - toggleDragStart
-	local newX = toggleStartPos.X.Offset + delta.X
-	local newY = toggleStartPos.Y.Offset + delta.Y
-	
-	-- Apply easing for smooth movement
-	local tween = TweenService:Create(ToggleButton, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-		Position = UDim2.new(toggleStartPos.X.Scale, newX, toggleStartPos.Y.Scale, newY)
-	})
-	tween:Play()
-end
-
-ToggleButton.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		toggleDragging = true
-		toggleDragStart = input.Position
-		toggleStartPos = ToggleButton.Position
-		
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then
-				toggleDragging = false
-			end
-		end)
-	end
-end)
-
-ToggleButton.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-		toggleDragInput = input
-	end
-end)
-
 UserInputService.InputChanged:Connect(function(input)
-	if toggleDragging and (input == toggleDragInput) then
-		toggleUpdate(input)
-	end
+    if input == dragInputRigs and draggingRigs then
+        updateRigs(input)
+    end
 end)
-
-ToggleButton.MouseButton1Click:Connect(function()
-	if not toggleDragging then
-		local isVisible = MainFrame.Visible
-		
-		if isVisible then
-			FadeOutAll(function()
-				MainFrame.Visible = false
-			end)
-			
-			-- Fade out toggle button outline when closing
-			local outlineOut = TweenService:Create(ToggleStroke, TweenInfo.new(0.3), {Transparency = 1})
-			outlineOut:Play()
-		else
-			MainFrame.Visible = true
-			-- Set Reanimate as active by default when opening
-			SetToggleActive(ReanimateToggle, ReanimateLabel)
-			HideAllSidebarLines()
-			ShowLineForToggle(ReanimateToggle)
-			ClearScroller()
-			
-			-- Add all 38 reanimate toggles
-			for i, scriptData in ipairs(reanimationScripts) do
-				local toggle, label = CreateToggle(scriptData.name, Scroller)
-				toggle.Position = UDim2.new(0, 10, 0, 10 + ((i-1) * 55))
-				toggle.Size = UDim2.new(1, -20, 0, 45)
-				
-				-- Make these toggles clickable with white/black inversion
-				toggle.InputBegan:Connect(function(clickInput)
-					if clickInput.UserInputType == Enum.UserInputType.MouseButton1 then
-						-- Play toggle sound
-						playToggleSound()
-						
-						-- Animate click
-						local originalBg = toggle.BackgroundColor3
-						local originalText = label.TextColor3
-						
-						local fadeToWhite = TweenService:Create(toggle, TweenInfo.new(0.3), {BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0})
-						fadeToWhite:Play()
-						
-						local textToBlack = TweenService:Create(label, TweenInfo.new(0.3), {TextColor3 = Color3.new(0, 0, 0)})
-						textToBlack:Play()
-						
-						-- Execute the reanimation script (silently)
-						ExecuteReanimation(scriptData)
-						
-						wait(0.3)
-						
-						local fadeBack = TweenService:Create(toggle, TweenInfo.new(0.3), {BackgroundColor3 = originalBg, BackgroundTransparency = 0.2})
-						fadeBack:Play()
-						
-						local textBack = TweenService:Create(label, TweenInfo.new(0.3), {TextColor3 = originalText})
-						textBack:Play()
-					end
-				end)
-			end
-			
-			-- Set scroller canvas size based on number of items
-			Scroller.CanvasSize = UDim2.new(0, 0, 0, #reanimationScripts * 55 + 20)
-			
-			FadeInAll()
-			
-			-- Fade in toggle button outline when opening
-			local outlineIn = TweenService:Create(ToggleStroke, TweenInfo.new(0.3), {Transparency = 0.5})
-			outlineIn:Play()
-		end
-	end
-end)
-
--- Parent everything
-ScreenGui.Parent = player:WaitForChild("PlayerGui")
-MainFrame.Parent = ScreenGui
-ToggleButton.Parent = ScreenGui
-
--- Update avatar when player changes
-player.CharacterAdded:Connect(function()
-	AvatarImage.Image = "rbxthumb://type=AvatarHeadShot&id=" .. player.UserId .. "&w=150&h=150"
-end)
-
--- Handle screen size changes for mobile
-if isMobile then
-	game:GetService("GuiService"):GetSafeAreaInsetsChangedSignal():Connect(function()
-		local safeArea = game:GetService("GuiService"):GetSafeAreaInsets()
-		MainFrame.Size = UDim2.new(0.85, 0, 0.7, 0)
-		MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-		MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-	end)
+-- Items Frame for Lightning Cannon
+local itemsFrame = Instance.new("Frame")
+itemsFrame.Name = "ItemsFrame"
+itemsFrame.Size = isMobile and UDim2.new(0, 240, 0, 320) or UDim2.new(0, 280, 0, 360)
+itemsFrame.Position = isMobile and UDim2.new(0.5, -120, 0.5, -160) or UDim2.new(0.5, -140, 0.5, -180)
+itemsFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+itemsFrame.BackgroundTransparency = 0.3
+itemsFrame.BorderSizePixel = 0
+itemsFrame.Visible = false
+itemsFrame.Parent = screenGui
+local itemsFrameCorner = Instance.new("UICorner")
+itemsFrameCorner.CornerRadius = UDim.new(0, 18)
+itemsFrameCorner.Parent = itemsFrame
+local itemsFrameBorder = Instance.new("UIStroke")
+itemsFrameBorder.Color = Color3.fromRGB(255, 255, 255)
+itemsFrameBorder.Thickness = 1
+itemsFrameBorder.Transparency = 0.8
+itemsFrameBorder.Parent = itemsFrame
+-- Items Title
+local itemsTitle = Instance.new("TextLabel")
+itemsTitle.Size = UDim2.new(1, 0, 0, isMobile and 30 or 35)
+itemsTitle.BackgroundTransparency = 1
+itemsTitle.Text = "Item IDs"
+itemsTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+itemsTitle.TextSize = isMobile and 13 or 15
+itemsTitle.Font = Enum.Font.GothamBold
+itemsTitle.TextTransparency = 0
+itemsTitle.Parent = itemsFrame
+-- Close button for items
+local itemsClose = Instance.new("TextButton")
+itemsClose.Size = isMobile and UDim2.new(0, 20, 0, 20) or UDim2.new(0, 24, 0, 24)
+itemsClose.Position = isMobile and UDim2.new(1, -25, 0, 5) or UDim2.new(1, -29, 0, 5)
+itemsClose.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+itemsClose.BackgroundTransparency = 0.6
+itemsClose.Text = "X"
+itemsClose.TextColor3 = Color3.fromRGB(255, 255, 255)
+itemsClose.TextSize = isMobile and 10 or 12
+itemsClose.Font = Enum.Font.GothamBold
+itemsClose.BorderSizePixel = 0
+itemsClose.Parent = itemsFrame
+local itemsCloseCorner = Instance.new("UICorner")
+itemsCloseCorner.CornerRadius = UDim.new(0, 10)
+itemsCloseCorner.Parent = itemsClose
+-- Items ScrollFrame
+local itemsScroll = Instance.new("ScrollingFrame")
+itemsScroll.Size = isMobile and UDim2.new(1, -20, 1, -40) or UDim2.new(1, -20, 1, -45)
+itemsScroll.Position = isMobile and UDim2.new(0, 10, 0, 35) or UDim2.new(0, 10, 0, 40)
+itemsScroll.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+itemsScroll.BackgroundTransparency = 0.7
+itemsScroll.BorderSizePixel = 0
+itemsScroll.ScrollBarThickness = isMobile and 3 or 4
+itemsScroll.ScrollBarImageColor3 = Color3.fromRGB(255, 255, 255)
+itemsScroll.ScrollBarImageTransparency = 0.6
+itemsScroll.Parent = itemsFrame
+local itemsScrollCorner = Instance.new("UICorner")
+itemsScrollCorner.CornerRadius = UDim.new(0, 14)
+itemsScrollCorner.Parent = itemsScroll
+local itemsLayout = Instance.new("UIListLayout")
+itemsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+itemsLayout.Padding = UDim.new(0, 6)
+itemsLayout.Parent = itemsScroll
+local itemsPadding = Instance.new("UIPadding")
+itemsPadding.PaddingTop = UDim.new(0, 8)
+itemsPadding.PaddingBottom = UDim.new(0, 8)
+itemsPadding.PaddingLeft = UDim.new(0, 8)
+itemsPadding.PaddingRight = UDim.new(0, 8)
+itemsPadding.Parent = itemsScroll
+-- Create item entries
+for _, categoryData in ipairs(itemData) do
+    local categoryLabel = Instance.new("TextLabel")
+    categoryLabel.Size = UDim2.new(1, -16, 0, isMobile and 22 or 25)
+    categoryLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    categoryLabel.BackgroundTransparency = 0.95
+    categoryLabel.Text = categoryData.category
+    categoryLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    categoryLabel.TextSize = isMobile and 10 or 12
+    categoryLabel.Font = Enum.Font.GothamBold
+    categoryLabel.BorderSizePixel = 0
+    categoryLabel.Parent = itemsScroll
+    local catCorner = Instance.new("UICorner")
+    catCorner.CornerRadius = UDim.new(0, 8)
+    catCorner.Parent = categoryLabel
+    for _, item in ipairs(categoryData.items) do
+        local id = item.url:match("/catalog/(%d+)/")
+        if id then
+            local itemFrame = Instance.new("Frame")
+            itemFrame.Size = UDim2.new(1, -16, 0, isMobile and 42 or 50)
+            itemFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+            itemFrame.BackgroundTransparency = 0.6
+            itemFrame.BorderSizePixel = 0
+            itemFrame.Parent = itemsScroll
+            local itemCorner = Instance.new("UICorner")
+            itemCorner.CornerRadius = UDim.new(0, 10)
+            itemCorner.Parent = itemFrame
+            local itemBorder = Instance.new("UIStroke")
+            itemBorder.Color = Color3.fromRGB(255, 255, 255)
+            itemBorder.Thickness = 1
+            itemBorder.Transparency = 0.9
+            itemBorder.Parent = itemFrame
+            local itemImage = Instance.new("ImageLabel")
+            itemImage.Size = isMobile and UDim2.new(0, 34, 0, 34) or UDim2.new(0, 42, 0, 42)
+            itemImage.Position = UDim2.new(0, 4, 0.5, isMobile and -17 or -21)
+            itemImage.BackgroundTransparency = 1
+            itemImage.Image = "rbxthumb://type=Asset&id=" .. id .. "&w=150&h=150"
+            itemImage.ScaleType = Enum.ScaleType.Fit
+            itemImage.Parent = itemFrame
+            local decalPreview = Instance.new("ImageLabel")
+            decalPreview.Size = isMobile and UDim2.new(0, 34, 0, 34) or UDim2.new(0, 42, 0, 42)
+            decalPreview.Position = UDim2.new(1, isMobile and -38 or -46, 0.5, isMobile and -17 or -21)
+            decalPreview.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+            decalPreview.BackgroundTransparency = 0.4
+            decalPreview.BorderSizePixel = 0
+            decalPreview.Image = "rbxthumb://type=Asset&id=" .. id .. "&w=150&h=150"
+            decalPreview.ScaleType = Enum.ScaleType.Fit
+            decalPreview.Parent = itemFrame
+            local decalCorner = Instance.new("UICorner")
+            decalCorner.CornerRadius = UDim.new(0, 8)
+            decalCorner.Parent = decalPreview
+            local decalBorder = Instance.new("UIStroke")
+            decalBorder.Color = Color3.fromRGB(255, 255, 255)
+            decalBorder.Thickness = 0.5
+            decalBorder.Transparency = 0.95
+            decalBorder.Parent = decalPreview
+            local itemLabel = Instance.new("TextLabel")
+            itemLabel.Size = UDim2.new(1, isMobile and -85 or -98, 1, 0)
+            itemLabel.Position = isMobile and UDim2.new(0, 42, 0, 0) or UDim2.new(0, 50, 0, 0)
+            itemLabel.BackgroundTransparency = 1
+            itemLabel.Text = item.name
+            itemLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            itemLabel.TextSize = isMobile and 8 or 10
+            itemLabel.Font = Enum.Font.GothamSemibold
+            itemLabel.TextXAlignment = Enum.TextXAlignment.Left
+            itemLabel.TextWrapped = true
+            itemLabel.Parent = itemFrame
+            local itemButton = Instance.new("TextButton")
+            itemButton.Size = UDim2.new(1, 0, 1, 0)
+            itemButton.BackgroundTransparency = 1
+            itemButton.Text = ""
+            itemButton.Parent = itemFrame
+            itemButton.MouseButton1Click:Connect(function()
+                TweenService:Create(itemFrame, TweenInfo.new(0.1), {BackgroundTransparency = 0.4}):Play()
+                TweenService:Create(itemFrame, TweenInfo.new(0.3), {
+                    BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                    BackgroundTransparency = 0.4
+                }):Play()
+                TweenService:Create(itemLabel, TweenInfo.new(0.3), {
+                    TextColor3 = Color3.fromRGB(0, 0, 0)
+                }):Play()
+                wait(0.5)
+                TweenService:Create(itemFrame, TweenInfo.new(0.4), {
+                    BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+                    BackgroundTransparency = 0.6
+                }):Play()
+                TweenService:Create(itemLabel, TweenInfo.new(0.4), {
+                    TextColor3 = Color3.fromRGB(255, 255, 255)
+                }):Play()
+                setclipboard(id)
+                local originalText = itemLabel.Text
+                itemLabel.Text = item.name .. " (Copied!)"
+                wait(1.5)
+                itemLabel.Text = originalText
+            end)
+            itemButton.MouseEnter:Connect(function()
+                TweenService:Create(itemFrame, TweenInfo.new(0.2), {BackgroundTransparency = 0.45}):Play()
+                TweenService:Create(itemBorder, TweenInfo.new(0.2), {Transparency = 0.6}):Play()
+            end)
+            itemButton.MouseLeave:Connect(function()
+                TweenService:Create(itemFrame, TweenInfo.new(0.2), {BackgroundTransparency = 0.6}):Play()
+                TweenService:Create(itemBorder, TweenInfo.new(0.2), {Transparency = 0.9}):Play()
+            end)
+        end
+    end
 end
-
-print("Reanimate GUI loaded successfully with all 38 scripts!")
+itemsScroll.CanvasSize = UDim2.new(0, 0, 0, itemsLayout.AbsoluteContentSize.Y + 16)
+itemsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    itemsScroll.CanvasSize = UDim2.new(0, 0, 0, itemsLayout.AbsoluteContentSize.Y + 16)
+end)
+-- Items close functionality
+local itemsOpen = false
+itemsClose.MouseButton1Click:Connect(function()
+    itemsOpen = false
+    TweenService:Create(itemsFrame, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(itemsTitle, TweenInfo.new(0.2), {TextTransparency = 1}):Play()
+    TweenService:Create(itemsScroll, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(itemsClose, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(itemsToggle, TweenInfo.new(0.3), {
+        Rotation = 0,
+        BackgroundTransparency = 0.6
+    }):Play()
+    wait(0.2)
+    itemsFrame.Visible = false
+end)
+itemsClose.MouseEnter:Connect(function()
+    TweenService:Create(itemsClose, TweenInfo.new(0.2), {BackgroundTransparency = 0.4}):Play()
+end)
+itemsClose.MouseLeave:Connect(function()
+    TweenService:Create(itemsClose, TweenInfo.new(0.2), {BackgroundTransparency = 0.6}):Play()
+end)
+-- Items toggle functionality
+itemsToggle.MouseButton1Click:Connect(function()
+    itemsOpen = not itemsOpen
+    itemsFrame.Visible = itemsOpen
+    if itemsOpen then
+        TweenService:Create(itemsFrame, TweenInfo.new(0.3), {BackgroundTransparency = 0.3}):Play()
+        TweenService:Create(itemsTitle, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
+        TweenService:Create(itemsScroll, TweenInfo.new(0.3), {BackgroundTransparency = 0.7}):Play()
+        TweenService:Create(itemsClose, TweenInfo.new(0.3), {BackgroundTransparency = 0.6}):Play()
+        TweenService:Create(itemsToggle, TweenInfo.new(0.3), {
+            Rotation = 90,
+            BackgroundTransparency = 0.4
+        }):Play()
+    else
+        TweenService:Create(itemsFrame, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+        TweenService:Create(itemsTitle, TweenInfo.new(0.2), {TextTransparency = 1}):Play()
+        TweenService:Create(itemsScroll, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+        TweenService:Create(itemsClose, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+        TweenService:Create(itemsToggle, TweenInfo.new(0.3), {
+            Rotation = 0,
+            BackgroundTransparency = 0.6
+        }):Play()
+        wait(0.2)
+        itemsFrame.Visible = false
+    end
+end)
+itemsToggle.MouseEnter:Connect(function()
+    TweenService:Create(itemsToggle, TweenInfo.new(0.2), {BackgroundTransparency = 0.4}):Play()
+    TweenService:Create(itemsToggleBorder, TweenInfo.new(0.2), {Transparency = 0.5}):Play()
+end)
+itemsToggle.MouseLeave:Connect(function()
+    if itemsOpen then
+        TweenService:Create(itemsToggle, TweenInfo.new(0.2), {BackgroundTransparency = 0.4}):Play()
+    else
+        TweenService:Create(itemsToggle, TweenInfo.new(0.2), {BackgroundTransparency = 0.6}):Play()
+    end
+    TweenService:Create(itemsToggleBorder, TweenInfo.new(0.2), {Transparency = 0.8}):Play()
+end)
+-- Dragging functionality for items frame
+local draggingItems = false
+local dragInputItems, mousePosItems, framePosItems
+local dragTweenItems
+local function updateItems(input)
+    if dragTweenItems then
+        dragTweenItems:Cancel()
+    end
+    local delta = input.Position - mousePosItems
+    local targetPos = UDim2.new(
+        framePosItems.X.Scale,
+        framePosItems.X.Offset + delta.X,
+        framePosItems.Y.Scale,
+        framePosItems.Y.Offset + delta.Y
+    )
+    dragTweenItems = TweenService:Create(itemsFrame, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Position = targetPos
+    })
+    dragTweenItems:Play()
+end
+itemsFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        draggingItems = true
+        mousePosItems = input.Position
+        framePosItems = itemsFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                draggingItems = false
+            end
+        end)
+    end
+end)
+itemsFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInputItems = input
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInputItems and draggingItems then
+        updateItems(input)
+    end
+end)
+-- Main frame toggle functionality
+local isOpen = false
+toggleButton.MouseButton1Click:Connect(function()
+    isOpen = not isOpen
+    if isOpen then
+        mainFrame.Visible = true
+        mainFrame.BackgroundTransparency = 1
+        titleLabel.TextTransparency = 1
+        scrollFrame.BackgroundTransparency = 1
+        borderFrame.BackgroundTransparency = 1
+  
+        for _, button in ipairs(scrollFrame:GetChildren()) do
+            if button:IsA("TextButton") then
+                button.BackgroundTransparency = 1
+                button.TextTransparency = 1
+            end
+        end
+  
+        TweenService:Create(mainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            BackgroundTransparency = 0.3
+        }):Play()
+  
+        TweenService:Create(borderFrame, TweenInfo.new(0.4), {
+            BackgroundTransparency = 0.9
+        }):Play()
+  
+        TweenService:Create(titleLabel, TweenInfo.new(0.4), {
+            TextTransparency = 0
+        }):Play()
+  
+        TweenService:Create(titleLine, TweenInfo.new(0.4), {
+            BackgroundTransparency = 0.8
+        }):Play()
+  
+        TweenService:Create(scrollFrame, TweenInfo.new(0.4), {
+            BackgroundTransparency = 0.7
+        }):Play()
+  
+        for _, button in ipairs(scrollFrame:GetChildren()) do
+            if button:IsA("TextButton") then
+                TweenService:Create(button, TweenInfo.new(0.4), {
+                    BackgroundTransparency = 0.6,
+                    TextTransparency = 0.05
+                }):Play()
+            end
+        end
+  
+        TweenService:Create(toggleButton, TweenInfo.new(0.3), {
+            BackgroundTransparency = 0.5,
+            Rotation = 90
+        }):Play()
+    else
+        TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            BackgroundTransparency = 1
+        }):Play()
+  
+        TweenService:Create(borderFrame, TweenInfo.new(0.3), {
+            BackgroundTransparency = 1
+        }):Play()
+  
+        TweenService:Create(titleLabel, TweenInfo.new(0.3), {
+            TextTransparency = 1
+        }):Play()
+  
+        TweenService:Create(titleLine, TweenInfo.new(0.3), {
+            BackgroundTransparency = 1
+        }):Play()
+  
+        TweenService:Create(scrollFrame, TweenInfo.new(0.3), {
+            BackgroundTransparency = 1
+        }):Play()
+  
+        for _, button in ipairs(scrollFrame:GetChildren()) do
+            if button:IsA("TextButton") then
+                TweenService:Create(button, TweenInfo.new(0.3), {
+                    BackgroundTransparency = 1,
+                    TextTransparency = 1
+                }):Play()
+            end
+        end
+  
+        TweenService:Create(toggleButton, TweenInfo.new(0.3), {
+            BackgroundTransparency = 0.3,
+            Rotation = 0
+        }):Play()
+  
+        wait(0.3)
+        mainFrame.Visible = false
+    end
+end)
+toggleButton.MouseEnter:Connect(function()
+    TweenService:Create(toggleButton, TweenInfo.new(0.2), {
+        BackgroundTransparency = 0.2
+    }):Play()
+    TweenService:Create(toggleBorder, TweenInfo.new(0.2), {
+        Transparency = 0.4
+    }):Play()
+end)
+toggleButton.MouseLeave:Connect(function()
+    if isOpen then
+        TweenService:Create(toggleButton, TweenInfo.new(0.2), {
+            BackgroundTransparency = 0.5
+        }):Play()
+    else
+        TweenService:Create(toggleButton, TweenInfo.new(0.2), {
+            BackgroundTransparency = 0.3
+        }):Play()
+    end
+    TweenService:Create(toggleBorder, TweenInfo.new(0.2), {
+        Transparency = 0.7
+    }):Play()
+end)
+-- Dragging functionality for toggle button
+local draggingToggle = false
+local dragInputToggle, mousePosToggle, framePosToggle
+local dragTweenToggle
+local function updateToggle(input)
+    if dragTweenToggle then
+        dragTweenToggle:Cancel()
+    end
+    local delta = input.Position - mousePosToggle
+    local targetPos = UDim2.new(
+        framePosToggle.X.Scale,
+        framePosToggle.X.Offset + delta.X,
+        framePosToggle.Y.Scale,
+        framePosToggle.Y.Offset + delta.Y
+    )
+    dragTweenToggle = TweenService:Create(toggleButton, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Position = targetPos
+    })
+    dragTweenToggle:Play()
+end
+toggleButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        draggingToggle = true
+        mousePosToggle = input.Position
+        framePosToggle = toggleButton.Position
+  
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                draggingToggle = false
+            end
+        end)
+    end
+end)
+toggleButton.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInputToggle = input
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInputToggle and draggingToggle then
+        updateToggle(input)
+    end
+end)
+-- Dragging functionality for main frame
+local draggingMain = false
+local dragInputMain, mousePosMain, framePosMain
+local dragTweenMain
+local function updateMain(input)
+    if dragTweenMain then
+        dragTweenMain:Cancel()
+    end
+    local delta = input.Position - mousePosMain
+    local targetPos = UDim2.new(
+        framePosMain.X.Scale,
+        framePosMain.X.Offset + delta.X,
+        framePosMain.Y.Scale,
+        framePosMain.Y.Offset + delta.Y
+    )
+    dragTweenMain = TweenService:Create(mainFrame, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Position = targetPos
+    })
+    dragTweenMain:Play()
+end
+mainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        draggingMain = true
+        mousePosMain = input.Position
+        framePosMain = mainFrame.Position
+  
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                draggingMain = false
+            end
+        end)
+    end
+end)
+mainFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInputMain = input
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInputMain and draggingMain then
+        updateMain(input)
+    end
+end)
+-- Startup animation
+toggleButton.Position = UDim2.new(0, -100, 0.5, -25)
+TweenService:Create(toggleButton, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+    Position = UDim2.new(0, 20, 0.5, -25)
+}):Play()
+print("Genesis FE Scripts GUI loaded successfully with all updates!")
